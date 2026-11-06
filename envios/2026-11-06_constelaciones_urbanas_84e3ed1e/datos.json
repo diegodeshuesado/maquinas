@@ -1,0 +1,54 @@
+{
+  "id": "2026-11-06_constelaciones_urbanas_84e3ed1e",
+  "maquina": "constelaciones_urbanas",
+  "titulo": "Tridente de laboratorio",
+  "narrativa": "El tridente de laboratorio es un gigante encerrado que se conforma de la esperanza de que laboratorio ciencia cambiará al país, recursos financieros y el poder colaborar a la sociedad. Sin embargo se encuentra encerrado en un laboratorio esperando a que alguien lo pueda liberar.",
+  "ubicacion": "",
+  "alias": "d.d",
+  "ciudad": "Querétaro",
+  "fecha": "2026-11-06",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "aspecto": 1.3363,
+    "tarjetas": [
+      {
+        "id": "baf5fpm",
+        "x": 0.06,
+        "y": 0.06,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "Tridente encerrado"
+      },
+      {
+        "id": "h8h011d",
+        "x": 0.0567,
+        "y": 0.533,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "Tridente head"
+      },
+      {
+        "id": "0267yqr",
+        "x": 0.5852,
+        "y": 0.1834,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "Switch del Tridente"
+      }
+    ],
+    "lineas": [
+      [
+        "baf5fpm",
+        "0267yqr"
+      ],
+      [
+        "0267yqr",
+        "h8h011d"
+      ],
+      [
+        "h8h011d",
+        "baf5fpm"
+      ]
+    ]
+  }
+}
