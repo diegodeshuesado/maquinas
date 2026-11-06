@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tablero · máquinas_</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="envoltura">
+  <header class="cabeza">
+    <a class="marca" href="./">máquinas_</a>
+    <nav>
+      <a href="./">inicio</a>
+      <a id="enlace-instructivo" href="./">instructivo</a>
+      <a href="galeria.html">galería</a>
+    </nav>
+  </header>
+
+  <h1 id="titulo-maquina" style="font-size:clamp(26px,5vw,40px)">tablero_</h1>
+  <p class="sub" id="credito-maquina"></p>
+
+  <div class="barra" role="toolbar" aria-label="herramientas del tablero">
+    <label class="herr" for="camara" style="cursor:pointer">◉ cámara</label>
+    <input id="camara" class="entrada-foto" type="file" accept="image/*" capture="environment" hidden>
+    <label class="herr" for="subir" style="cursor:pointer">+ galería</label>
+    <input id="subir" class="entrada-foto" type="file" accept="image/*" multiple hidden>
+    <button class="herr" data-modo="mover" aria-pressed="true">mover</button>
+    <button class="herr" data-modo="conectar" aria-pressed="false">conectar</button>
+    <button class="herr" data-modo="borrar" aria-pressed="false">borrar</button>
+    <span class="espacio"></span>
+    <button class="herr" id="limpiar">limpiar tablero</button>
+    <p class="ayuda" id="ayuda" aria-live="polite"></p>
+  </div>
+
+  <div class="tablero modo-mover" id="tablero">
+    <svg class="lineas" id="lineas" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="vacio" id="vacio">toma una foto con «◉ cámara» o súbela desde «+ galería»<br>luego muévelas y conéctalas como una constelación_</div>
+  </div>
+
+  <form class="campos" id="formulario" autocomplete="off">
+    <div class="campo">
+      <label for="f-titulo">título:/&lt;</label>
+      <input id="f-titulo" name="titulo" maxlength="80" required placeholder="nombre de la constelación">
+    </div>
+    <div class="campo">
+      <label for="f-narrativa" id="l-narrativa">mito:/&lt;</label>
+      <textarea id="f-narrativa" name="narrativa" maxlength="3000" required placeholder="el mito de origen de tu constelación"></textarea>
+    </div>
+    <div class="campo">
+      <label for="f-ubicacion">ubicación:/&lt;</label>
+      <input id="f-ubicacion" name="ubicacion" maxlength="140" placeholder="coordenadas o dirección">
+    </div>
+    <div class="fila">
+      <div class="campo">
+        <label for="f-alias">alias:/&lt;</label>
+        <input id="f-alias" name="alias" maxlength="60" placeholder="opcional">
+      </div>
+      <div class="campo">
+        <label for="f-ciudad">ciudad:/&lt;</label>
+        <input id="f-ciudad" name="ciudad" maxlength="60" placeholder="opcional">
+      </div>
+    </div>
+
+    <div class="trampa" aria-hidden="true">
+      <label>no llenar <input name="website" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <label class="consent">
+      <input type="checkbox" id="f-consent">
+      <span>Acepto que mi pieza se publique en máquinas_ bajo la licencia
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
+      (crédito, sin uso comercial, compartir igual).</span>
+    </label>
+
+    <div id="turnstile"></div>
+
+    <div class="acciones">
+      <button type="button" class="boton claro" id="exportar">descargar png_</button>
+      <button type="submit" class="boton" id="enviar">enviar pieza_ →</button>
+    </div>
+    <p class="mensaje" id="mensaje" aria-live="polite"></p>
+  </form>
+
+  <footer class="pie-sitio">máquinas_ · Diego Deshuesado · tus fotos se quedan en tu navegador hasta que envías la pieza.</footer>
+</div>
+
+<script src="config.js"></script>
+<script src="assets/js/tablero.js"></script>
+</body>
+</html>

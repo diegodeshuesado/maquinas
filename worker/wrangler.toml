@@ -1,0 +1,14 @@
+# Solo si usas la terminal (wrangler). Si lo haces desde el panel de Cloudflare, ignora este archivo.
+name = "maquinas-envios"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+GITHUB_OWNER = "TU_USUARIO"
+GITHUB_REPO = "maquinas"
+GITHUB_BRANCH = "main"
+ALLOWED_ORIGIN = "https://TU_USUARIO.github.io"
+
+# Secretos (no van aquí):
+#   npx wrangler secret put GITHUB_TOKEN
+#   npx wrangler secret put TURNSTILE_SECRET

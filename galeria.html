@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>galería · máquinas_</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="envoltura">
+  <header class="cabeza">
+    <a class="marca" href="./">máquinas_</a>
+    <nav>
+      <a href="./">inicio</a>
+      <a href="galeria.html" aria-current="page">galería</a>
+    </nav>
+  </header>
+
+  <h1 style="font-size:clamp(28px,5vw,44px)">galería_</h1>
+  <p class="sub">piezas enviadas por participantes · <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" rel="license">CC BY-NC-SA 4.0</a></p>
+
+  <div class="rejilla" id="rejilla"></div>
+  <p class="mensaje" id="estado-galeria"></p>
+
+  <footer class="pie-sitio">máquinas_ · Diego Deshuesado</footer>
+</div>
+
+<div class="visor" id="visor" role="dialog" aria-modal="true" aria-label="pieza ampliada">
+  <button class="boton cerrar" id="cerrar">cerrar_ ×</button>
+  <img id="visor-img" alt="">
+</div>
+
+<script>
+(async () => {
+  const rejilla = document.getElementById('rejilla');
+  const estado = document.getElementById('estado-galeria');
+  const visor = document.getElementById('visor');
+  const vimg = document.getElementById('visor-img');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  try {
+    const r = await fetch('envios/index.json', { cache: 'no-store' });
+    const piezas = r.ok ? await r.json() : [];
+    if (!piezas.length) { estado.textContent = 'aún no hay piezas aprobadas_ sé la primera persona en participar.'; return; }
+    rejilla.innerHTML = piezas.map((p) => `
+      <button class="pieza" data-src="${esc(p.imagen)}" data-alt="${esc(p.titulo)}">
+        <img src="${esc(p.imagen)}" alt="${esc(p.titulo)}" loading="lazy">
+        <span class="datos"><strong>${esc(p.titulo)}</strong>${esc(p.maquina)} · ${esc(p.alias || 'anónimo')}${p.ciudad ? ' · ' + esc(p.ciudad) : ''} · ${esc(p.fecha)}</span>
+      </button>`).join('');
+    rejilla.addEventListener('click', (e) => {
+      const b = e.target.closest('.pieza'); if (!b) return;
+      vimg.src = b.dataset.src; vimg.alt = b.dataset.alt; visor.classList.add('abierto');
+    });
+  } catch { estado.textContent = 'no se pudo cargar la galería.'; }
+  const cerrar = () => visor.classList.remove('abierto');
+  document.getElementById('cerrar').addEventListener('click', cerrar);
+  visor.addEventListener('click', (e) => { if (e.target === visor) cerrar(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>máquinas_</title>
+<meta name="description" content="máquinas_ — instructivos para reinterpretar las relaciones entre personas en los espacios. Diego Deshuesado.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="envoltura">
+  <header class="cabeza">
+    <a class="marca" href="./">máquinas_</a>
+    <nav>
+      <a href="./" aria-current="page">inicio</a>
+      <a href="galeria.html">galería</a>
+    </nav>
+  </header>
+
+  <section class="intro">
+    <h1>máquinas_</h1>
+    <p class="sub">Diego Deshuesado</p>
+    <!-- EDITA AQUÍ: texto de introducción -->
+    <p><em>_máquinas</em> son instructivos que buscan llegar a una reinterpretación de las relaciones entre personas en los espacios, dando como resultado diversos desarrollos auditivos, textuales y narrativos.</p>
+    <p>El cuestionamiento de la respuesta del tejido social a una serie de reglas preestablecidas, con tintes arbitrarios, y de la conceptualización del lenguaje como código, algoritmo o programa, nos lleva a nuevas reflexiones.</p>
+    <p>Cualquier persona puede participar: elige una máquina, sigue su instructivo, arma tu pieza en el tablero y envíala. Las piezas aprobadas forman parte de la galería.</p>
+  </section>
+
+  <h2>elige una máquina_</h2>
+  <div class="carpetas" id="carpetas"></div>
+
+  <footer class="pie-sitio">
+    máquinas_ · Diego Deshuesado · piezas participantes bajo licencia
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" rel="license">CC BY-NC-SA 4.0</a>
+  </footer>
+</div>
+
+<script>
+const MAQUINAS = [
+  { id: 'constelaciones_urbanas', nombre: 'constelacio-<br>nes_urbanas', activa: true,
+    op: 'Crear un compendio mitológico de constelaciones ficticias trazadas con las luces de la ciudad.' },
+  { id: 'un_pueblo_feliz', nombre: 'un_pue-<br>blo_feliz',
+    op: 'Contrarrestar el discurso de estabilidad social mediante la publicación de selfies con datos de violencia reales.' },
+  { id: 'poe_arqui_lecturas', nombre: 'poe_arqui_<br>lecturas',
+    op: 'Renombrar espacios de un entorno mediante poesía.' },
+  { id: 'anar_quitecturas', nombre: 'anar_quitec-<br>turas',
+    op: 'Intervenir fotografías de monumentos y fachadas con palabras, frases y símbolos de protesta.' },
+  { id: 'no_poesia', nombre: 'no_poe-<br>sía',
+    op: 'Reescribir poesía con escritura asémica.' },
+  { id: 'ficciones_de_mi_barrio', nombre: 'ficciones_-<br>de_mi_barrio',
+    op: 'Crear historias ficticias en calles de determinada colonia.' },
+];
+const carpeta = `<svg viewBox="0 0 150 104" aria-hidden="true"><path d="M2 16 V102 H148 V16 H62 L50 2 H2 Z" fill="none" stroke="#141414" stroke-width="2.2" stroke-linejoin="round"/><path d="M2 16 H62" stroke="#141414" stroke-width="2.2"/></svg>`;
+document.getElementById('carpetas').innerHTML = MAQUINAS.map(m => {
+  const tag = m.activa ? 'a' : 'div';
+  const href = m.activa ? ` href="${m.id}.html"` : '';
+  return `<${tag} class="carpeta ${m.activa ? 'activa' : 'inactiva'}"${href}>
+    ${carpeta}<span class="nombre">${m.nombre}</span>
+    <span class="cedula">operación:/&lt; ${m.op}</span>
+    <span class="estado">${m.activa ? 'abrir instructivo_ →' : 'próximamente_'}</span>
+  </${tag}>`;
+}).join('');
+</script>
+</body>
+</html>
