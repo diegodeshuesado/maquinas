@@ -2,5 +2,5 @@
 // Mientras estén vacíos, el tablero funciona y exporta PNG, pero el botón "enviar" avisa que los envíos aún no están activos.
 window.MAQUINAS_CONFIG = {
   WORKER_URL: '',          // ej. 'https://maquinas-envios.TU-SUBDOMINIO.workers.dev'
-  TURNSTILE_SITEKEY: '',   // ej. '0x4AAAAAAA...'
+  TURNSTILE_SITEKEY: '0x4AAAAAAF2x2hFO1VH0c_vP', // ej. '0x4AAAAAAA...'
 };
