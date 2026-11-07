@@ -1,19 +1,44 @@
-/* máquinas_ · constelaciones_urbanas
-   Asistente de 5 pasos: zona en el mapa → luces (fotos) → constelación → mito → revisar y enviar.
-   Todo ocurre en el navegador; nada sale hasta que la persona envía. */
+/* máquinas_ · tablero paso a paso
+   Asistente de 5 pasos para cada máquina: zona en el mapa → fotos → tablero → narrativa → revisar y enviar.
+   La máquina se elige con <body data-maquina="…">. Todo ocurre en el navegador; nada sale hasta que se envía. */
 (() => {
   'use strict';
 
   // ── configuración ─────────────────────────────────────────────────────
-  const M = {
-    id: 'constelaciones_urbanas',
-    titulo: 'máquina_constelaciones_urbanas',
-    credito: 'Diego Deshuesado y Daniel Vázquez',
-    narrativa: 'mito',
+  const MAQUINAS = {
+    constelaciones_urbanas: {
+      titulo: 'máquina_constelaciones_urbanas', credito: 'Diego Deshuesado y Daniel Vázquez',
+      narrativa: 'mito', sustantivo: 'constelación', clave: 'maquinas_constelaciones_urbanas_v2',
+      unidad: ['luz', 'luces'], opacidad: 0.35, lineas: true, pines: false,
+      faltaTitulo: 'falta el título de tu constelación.', faltaNarrativa: 'falta el mito de tu constelación.',
+      faltanFotos: (n) => `fotografía al menos ${n} luces para continuar.`,
+      altFoto: 'foto de una luz',
+      ayudas: {
+        mover: 'mover_ arrastra las fotos. escribe un título en su cédula si quieres.',
+        conectar: 'conectar_ toca una luz y luego otra para trazar una línea.',
+        punto: '+ punto_ toca un espacio vacío para añadir un punto imaginario.',
+        borrar: 'borrar_ toca una línea, una foto o un punto para quitarlo.',
+      },
+    },
+    ficciones_de_mi_barrio: {
+      titulo: 'máquina_ficciones_de_mi_barrio', credito: 'Diego Deshuesado',
+      narrativa: 'historia', sustantivo: 'historia', clave: 'maquinas_ficciones_de_mi_barrio_v1',
+      unidad: ['foto', 'fotos'], opacidad: 0.6, lineas: false, pines: true,
+      faltaTitulo: 'falta el título de tu historia.', faltaNarrativa: 'falta tu historia.',
+      faltanFotos: (n) => `toma al menos ${n} fotos para continuar.`,
+      altFoto: 'foto de la colonia',
+      ayudas: {
+        mover: 'mover_ arrastra las fotos. escribe un título en su cédula si quieres.',
+        pines: 'arrastra cada pin a la calle donde tomaste la foto. también puedes mover las fotos.',
+        borrar: 'borrar_ toca una foto para quitarla junto con su pin.',
+      },
+    },
   };
+  const ID = MAQUINAS[document.body.dataset.maquina] ? document.body.dataset.maquina : 'constelaciones_urbanas';
+  const M = { id: ID, ...MAQUINAS[ID] };
   const LICENCIA = 'CC BY-NC-SA 4.0';
   const CFG = window.MAQUINAS_CONFIG || {};
-  const CLAVE = 'maquinas_constelaciones_urbanas_v2';
+  const CLAVE = M.clave;
   const TOTAL = 5;
   const MIN_LUCES = 3;
   // mapa: CARTO (gris claro) si hay clave en config.js; si no, OpenStreetMap pasado a escala de grises
@@ -26,7 +51,7 @@
   const GRISES = !CLAVE_MAPA && !CFG.MAPA_TESELAS;
   const ATRIB = CLAVE_MAPA ? '© OpenStreetMap © CARTO' : '© OpenStreetMap';
   const INICIO = { lat: 20.5931, lng: -100.3923, zoom: 15 }; // centro de Querétaro mientras no hay ubicación
-  const OPACIDAD_MAPA = 0.35;
+  const OPACIDAD_MAPA = M.opacidad;
   const TRAZOS = { continua: '', discontinua: '8 6', punteada: '0.1 7' };
   const GROSORES = { fino: 1.2, medio: 2, grueso: 3.4 };
   const COLORES = [
@@ -53,12 +78,8 @@
   const aviso = $('#aviso'), mensaje = $('#mensaje');
   const campos = { titulo: $('#f-titulo'), narrativa: $('#f-narrativa'), alias: $('#f-alias'), ciudad: $('#f-ciudad') };
 
-  const AYUDAS = {
-    mover: 'mover_ arrastra las fotos. escribe un título en su cédula si quieres.',
-    conectar: 'conectar_ toca una luz y luego otra para trazar una línea.',
-    punto: '+ punto_ toca un espacio vacío para añadir un punto imaginario.',
-    borrar: 'borrar_ toca una línea, una foto o un punto para quitarlo.',
-  };
+  const AYUDAS = M.ayudas;
+  const conPines = () => M.pines && estado.paso >= 3;
 
   const uid = () => Math.random().toString(36).slice(2, 9);
   // tamaño del tablero; si está oculto (paso 1 o 5) se usa el último tamaño visible
@@ -219,6 +240,16 @@
     fondo.getContext('2d').drawImage(c, 0, 0);
   }
 
+  // posición de unas coordenadas dentro del tablero (fracciones 0–1), según la zona fijada
+  function aFraccion(lat, lng) {
+    const z = estado.zona; if (!z) return null;
+    const { W, H } = dims();
+    const p = proyectar(lat, lng, z.zoom), c = proyectar(z.lat, z.lng, z.zoom);
+    const k = W / z.w;
+    return { x: 0.5 + ((p.x - c.x) * k) / W, y: 0.5 + ((p.y - c.y) * k) / H };
+  }
+  const limitar = (n, a = 0.02, b = 0.98) => Math.min(b, Math.max(a, n));
+
   // ── fotos (paso 2) ────────────────────────────────────────────────────
   function reducir(file, max = 1400) {
     return new Promise((ok, mal) => {
@@ -241,7 +272,7 @@
       const p = await navigator.permissions.query({ name: 'geolocation' });
       if (p.state !== 'granted') return null;
       return await new Promise((ok) => navigator.geolocation.getCurrentPosition(
-        (pos) => ok({ lat: redondear(pos.coords.latitude), lng: redondear(pos.coords.longitude) }), () => ok(null), { timeout: 6000 }));
+        (pos) => ok({ lat: pos.coords.latitude, lng: pos.coords.longitude }), () => ok(null), { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }));
     } catch { return null; }
   }
   $$('.entrada-foto').forEach((entrada) => entrada.addEventListener('change', async (e) => {
@@ -260,11 +291,19 @@
         const jitter = ((n * 37) % 7) / 100;
         const id = uid();
         await fotosDB.poner(id, src);
-        estado.tarjetas.push({
-          id, src, ar, w, label: '', coords,
+        // se guardan redondeadas (~100 m); la posición exacta solo se usa para colocar el pin
+        const t = {
+          id, src, ar, w, label: '', coords: coords && { lat: redondear(coords.lat), lng: redondear(coords.lng) },
           x: Math.min(0.03 + col * (0.94 / cols) + jitter / 2, 1 - w),
           y: Math.min(0.03 + fila * (altoFrac + 0.05) + jitter, Math.max(0, 1 - altoFrac)),
-        });
+        };
+        if (M.pines) {
+          // con coordenadas, el pin va donde se tomó la foto; si no, cerca de la foto para que la persona lo ubique
+          const f = coords && aFraccion(coords.lat, coords.lng);
+          t.pin = f ? { x: limitar(f.x), y: limitar(f.y, 0.06) } : { x: limitar(t.x + w / 2 + 0.06), y: limitar(t.y + altoFrac + 0.08, 0.06) };
+          t.ubicada = !!f;
+        }
+        estado.tarjetas.push(t);
       } catch { aviso.textContent = 'no se pudo leer una de las imágenes.'; }
     }
     e.target.value = '';
@@ -278,9 +317,11 @@
     if (!n) { el.textContent = ''; el.classList.remove('listo'); return; }
     const listo = n >= MIN_LUCES;
     el.classList.toggle('listo', listo);
+    const [uno, varios] = M.unidad;
     el.textContent = listo
-      ? `${n} luces_ ✓ puedes seguir sumando más.`
-      : `${n} de ${MIN_LUCES} luces mínimo_ faltan ${MIN_LUCES - n}.`;
+      ? `${n} ${varios}_ ✓ puedes seguir sumando más.`
+      : `${n} de ${MIN_LUCES} ${varios} mínimo_ faltan ${MIN_LUCES - n}.`;
+    void uno;
   }
 
   function pintar() {
@@ -295,16 +336,30 @@
       el.dataset.id = t.id;
       el.style.left = `${t.x * 100}%`; el.style.top = `${t.y * 100}%`; el.style.width = `${t.w * W}px`;
       const img = document.createElement('img');
-      img.src = t.src; img.alt = t.label || 'foto de una luz'; img.draggable = false;
+      img.src = t.src; img.alt = t.label || M.altFoto; img.draggable = false;
       const inp = document.createElement('input');
       inp.value = t.label; inp.maxLength = 40; inp.placeholder = 'título_';
       inp.setAttribute('aria-label', 'título de esta foto');
       inp.readOnly = !(editable && (modo === 'mover'));
-      inp.addEventListener('input', () => { t.label = inp.value; img.alt = inp.value || 'foto de una luz'; guardar(); });
+      inp.addEventListener('input', () => {
+        t.label = inp.value; img.alt = inp.value || M.altFoto; guardar();
+        const espejo = document.querySelector(`#lista-fotos input[data-id="${t.id}"]`); if (espejo) espejo.value = inp.value;
+      });
       inp.addEventListener('pointerdown', (ev) => { if (!inp.readOnly) ev.stopPropagation(); });
       el.append(img, inp);
       tablero.appendChild(el);
       if (t.src && (!imgs.has(t.id) || imgs.get(t.id).src !== t.src)) { const im = new Image(); im.src = t.src; imgs.set(t.id, im); }
+    }
+    if (conPines()) {
+      for (const t of estado.tarjetas.filter((x) => x.src && x.pin)) {
+        const el = document.createElement('div');
+        el.className = 'pin nodo';
+        el.dataset.pin = t.id;
+        el.style.left = `${t.pin.x * 100}%`; el.style.top = `${t.pin.y * 100}%`;
+        el.title = 'arrastra el pin a la calle donde tomaste la foto';
+        el.innerHTML = '<svg viewBox="0 0 14 18" aria-hidden="true"><path d="M7 17 C7 17 1 10 1 6.5 A6 6 0 0 1 13 6.5 C13 10 7 17 7 17Z" fill="#141414" stroke="#fff" stroke-width="1.2"/><circle cx="7" cy="6.5" r="2" fill="#fff"/></svg>';
+        tablero.appendChild(el);
+      }
     }
     for (const p of estado.puntos) {
       const el = document.createElement('div');
@@ -349,6 +404,13 @@
         <line class="trazo" ${xy} stroke="${e.color}" stroke-width="${gw}" stroke-dasharray="${dash}" stroke-linecap="round"/></g>`;
     });
     for (const p of extremos.values()) html += `<circle cx="${p.x}" cy="${p.y}" r="${3 + gw}" fill="${e.color}" stroke="${e.color === '#ffffff' ? '#141414' : '#fff'}" stroke-width="1.5"/>`;
+    if (conPines()) {
+      for (const t of estado.tarjetas.filter((x) => x.src && x.pin)) {
+        const c = centro(t.id); if (!c) continue;
+        html += `<line x1="${c.x}" y1="${c.y}" x2="${t.pin.x * W}" y2="${t.pin.y * H}" stroke="#fff" stroke-width="2.6" opacity=".7"/>
+          <line x1="${c.x}" y1="${c.y}" x2="${t.pin.x * W}" y2="${t.pin.y * H}" stroke="#141414" stroke-width="1" stroke-dasharray="3 3"/>`;
+      }
+    }
     svg.innerHTML = html;
     svg.querySelectorAll('line.toque').forEach((ln) => {
       ln.style.pointerEvents = modo === 'borrar' ? 'stroke' : 'none';
@@ -362,7 +424,8 @@
     $$('[data-modo]').forEach((b) => b.classList.toggle('on', b.dataset.modo === m));
     tablero.className = `tablero marco modo-${m}`;
     const seccion = $(`.paso[data-paso="${estado.paso}"]`);
-    $$('[data-ayuda]', seccion).forEach((p) => { p.textContent = AYUDAS[m] || ''; });
+    const texto = conPines() && m === 'mover' && AYUDAS.pines ? AYUDAS.pines : AYUDAS[m];
+    $$('[data-ayuda]', seccion).forEach((p) => { p.textContent = texto || ''; });
     pintar();
   }
   document.addEventListener('click', (e) => {
@@ -373,6 +436,15 @@
   tablero.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('.nodo');
     const r = tablero.getBoundingClientRect();
+    if (el && el.classList.contains('pin')) {
+      const t = estado.tarjetas.find((x) => x.id === el.dataset.pin);
+      if (!t || modo === 'borrar') return;
+      e.preventDefault();
+      arrastre = { pin: t, el };
+      el.classList.add('arrastrando');
+      el.setPointerCapture(e.pointerId);
+      return;
+    }
     if (!el) {
       if (modo === 'punto' && estado.paso === 3 && !e.target.closest('line')) {
         estado.puntos.push({ id: uid(), x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height });
@@ -411,6 +483,13 @@
   });
   tablero.addEventListener('pointermove', (e) => {
     if (!arrastre) return;
+    if (arrastre.pin) {
+      const r = tablero.getBoundingClientRect(), t = arrastre.pin;
+      t.pin = { x: limitar((e.clientX - r.left) / r.width), y: limitar((e.clientY - r.top) / r.height, 0.06) };
+      t.ubicada = true;
+      arrastre.el.style.left = `${t.pin.x * 100}%`; arrastre.el.style.top = `${t.pin.y * 100}%`;
+      trazar(); return;
+    }
     const r = tablero.getBoundingClientRect(), { nodo, el, esPunto } = arrastre;
     const wf = esPunto ? 0 : nodo.w, hf = esPunto ? 0 : el.offsetHeight / r.height;
     nodo.x = Math.min(Math.max((e.clientX - r.left - arrastre.dx) / r.width, 0), 1 - wf);
@@ -424,7 +503,7 @@
   new ResizeObserver(() => { pintar(); pintarFondo(); }).observe(tablero);
 
   // ── estilo de línea (paso 3) ──────────────────────────────────────────
-  $('#colores').innerHTML = COLORES.map(([c, n]) =>
+  if ($('#colores')) $('#colores').innerHTML = COLORES.map(([c, n]) =>
     `<button class="muestra" data-color="${c}" style="background:${c}" aria-label="${n}" title="${n}"></button>`).join('');
   function marcarEstilo() {
     const e = estado.estilo;
@@ -444,10 +523,10 @@
   // ── pasos ─────────────────────────────────────────────────────────────
   function validar(paso) {
     if (paso === 1 && !estado.zona) return 'fija tu zona en el mapa para continuar.';
-    if (paso === 2 && estado.tarjetas.length < MIN_LUCES) return `fotografía al menos ${MIN_LUCES} luces para continuar.`;
-    if (paso === 3 && !estado.lineas.length) return 'traza al menos una línea entre tus luces.';
-    if (paso === 4 && !campos.titulo.value.trim()) return 'falta el título de tu constelación.';
-    if (paso === 4 && !campos.narrativa.value.trim()) return 'falta el mito de tu constelación.';
+    if (paso === 2 && estado.tarjetas.length < MIN_LUCES) return M.faltanFotos(MIN_LUCES);
+    if (paso === 3 && M.lineas && !estado.lineas.length) return 'traza al menos una línea entre tus luces.';
+    if (paso === 4 && !campos.titulo.value.trim()) return M.faltaTitulo;
+    if (paso === 4 && !campos.narrativa.value.trim()) return M.faltaNarrativa;
     return null;
   }
   const hayAvance = () => !!(estado.zona || estado.tarjetas.length || estado.puntos.length ||
@@ -467,10 +546,28 @@
     guardar();
   }
   $('#reiniciar').addEventListener('click', () => {
-    if (!confirm('¿borrar esta constelación y empezar una nueva?')) return;
+    if (!confirm(`¿borrar esta ${M.sustantivo} y empezar una nueva?`)) return;
     reiniciar(true); irA(1);
   });
   $('#nueva').addEventListener('click', () => irA(1));
+
+  // lista de fotos con su título (paso 4 de ficciones)
+  function pintarLista() {
+    const lista = $('#lista-fotos'); if (!lista) return;
+    lista.innerHTML = '';
+    for (const t of estado.tarjetas.filter((x) => x.src)) {
+      const fila = document.createElement('div'); fila.className = 'foto-fila';
+      const im = document.createElement('img'); im.src = t.src; im.alt = '';
+      const inp = document.createElement('input');
+      inp.value = t.label; inp.maxLength = 40; inp.placeholder = 'título (opcional)'; inp.dataset.id = t.id;
+      inp.setAttribute('aria-label', 'título de esta foto');
+      inp.addEventListener('input', () => {
+        t.label = inp.value; guardar();
+        const enTablero = tablero.querySelector(`.tarjeta[data-id="${t.id}"] input`); if (enTablero) enTablero.value = inp.value;
+      });
+      fila.append(im, inp); lista.appendChild(fila);
+    }
+  }
 
   function irA(paso) {
     estado.paso = paso;
@@ -493,6 +590,7 @@
     cambiarModo('mover');
     marcarEstilo();
     if (paso >= 2 && paso <= 4) { fondoListo = null; pintarFondo(); }
+    if (paso === 4) pintarLista();
     if (paso === TOTAL) actualizarVista();
     guardar();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -610,6 +708,26 @@
       g.beginPath(); g.arc(ox + p.x * interior, oy + p.y * BH, 7 * k, 0, Math.PI * 2);
       g.fillStyle = '#fff'; g.fill(); g.lineWidth = 1.6 * k; g.strokeStyle = e.color === '#ffffff' ? '#141414' : e.color; g.stroke();
     }
+    if (M.pines) {
+      const pines = estado.tarjetas.filter((t) => t.pin && centros.has(t.id));
+      g.setLineDash([3 * k, 3 * k]); g.lineCap = 'butt';
+      for (const t of pines) {
+        const c = centros.get(t.id), px = ox + t.pin.x * interior, py = oy + t.pin.y * BH;
+        g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2.6 * k; g.setLineDash([]);
+        g.beginPath(); g.moveTo(c.x, c.y); g.lineTo(px, py); g.stroke();
+        g.strokeStyle = '#141414'; g.lineWidth = 1 * k; g.setLineDash([3 * k, 3 * k]);
+        g.beginPath(); g.moveTo(c.x, c.y); g.lineTo(px, py); g.stroke();
+      }
+      g.setLineDash([]);
+      for (const t of pines) {
+        const px = ox + t.pin.x * interior, py = oy + t.pin.y * BH, q = 1.5 * k;
+        g.save(); g.translate(px - 7 * q, py - 17 * q); g.scale(q, q);
+        const forma = new Path2D('M7 17 C7 17 1 10 1 6.5 A6 6 0 0 1 13 6.5 C13 10 7 17 7 17Z');
+        g.fillStyle = '#141414'; g.fill(forma); g.lineWidth = 1.2; g.strokeStyle = '#fff'; g.stroke(forma);
+        g.beginPath(); g.arc(7, 6.5, 2, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill();
+        g.restore();
+      }
+    }
     g.restore();
     g.lineWidth = 1.5 * S; g.strokeStyle = '#141414'; g.strokeRect(ox + 0.5, oy + 0.5, interior - 1, BH - 1);
     if (conMapa && estado.zona) {
@@ -696,7 +814,10 @@
           aspecto: +(tablero.clientHeight / tablero.clientWidth).toFixed(4),
           zona: estado.zona && { lat: redondear(estado.zona.lat), lng: redondear(estado.zona.lng), zoom: estado.zona.zoom },
           estilo: estado.estilo,
-          tarjetas: estado.tarjetas.map(({ id, x, y, w, ar, label, coords }) => ({ id, x: +x.toFixed(4), y: +y.toFixed(4), w, ar: +ar.toFixed(4), label, coords })),
+          tarjetas: estado.tarjetas.map(({ id, x, y, w, ar, label, coords, pin }) => ({
+            id, x: +x.toFixed(4), y: +y.toFixed(4), w, ar: +ar.toFixed(4), label, coords,
+            ...(pin ? { pin: { x: +pin.x.toFixed(4), y: +pin.y.toFixed(4) } } : {}),
+          })),
           puntos: estado.puntos.map(({ id, x, y }) => ({ id, x: +x.toFixed(4), y: +y.toFixed(4) })),
           lineas: estado.lineas,
         },
@@ -760,6 +881,7 @@
 
   // ── inicio ────────────────────────────────────────────────────────────
   document.body.classList.toggle('mapa-gris', GRISES);
+  fondo.style.opacity = String(OPACIDAD_MAPA);
   $$('.atrib').forEach((el) => { el.textContent = ATRIB; });
   recuperar().then(() => irA(estado.paso || 1));
 })();

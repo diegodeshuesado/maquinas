@@ -7,7 +7,9 @@ Las personas **no necesitan cuenta de GitHub**.
 ```
 index.html                  inicio con las seis carpetas
 constelaciones_urbanas.html instructivo
-tablero.html                asistente de 5 pasos: zona (mapa) → luces → constelación → mito → enviar
+tablero.html                constelaciones_urbanas: zona (mapa) → luces → constelación → mito → enviar
+ficciones_de_mi_barrio.html instructivo
+tablero_ficciones.html      ficciones_de_mi_barrio: colonia → fotos → pines en el mapa → historia → enviar
 galeria.html                piezas aprobadas
 config.js                   ← aquí pegas la URL del Worker y la clave de Turnstile
 assets/                     estilos, script del tablero, fotos de la expo
@@ -89,9 +91,9 @@ Cada vez que cambie `worker/worker.js`, vuelve a pegarlo en Cloudflare: **Worker
 - Operaciones de las seis carpetas: lista `MAQUINAS` al final de `index.html`.
 
 ## Agregar otra máquina al tablero
-1. Copia `constelaciones_urbanas.html` como `<id>.html` y cambia el texto.
-2. En `assets/js/tablero.js`, agrega su entrada en `MAQUINAS` (título, crédito, nombre de la narrativa).
-3. En `index.html`, marca esa carpeta con `activa: true`.
+1. Copia un instructivo (`<id>.html`) y un tablero (`tablero_<id>.html`) y cambia los textos; el tablero lleva `<body data-maquina="<id>">`.
+2. En `assets/js/tablero.js`, agrega su entrada en `MAQUINAS` (textos, mínimo, líneas o pines, opacidad del mapa).
+3. En `index.html` marca la carpeta con `activa: true`, y en `galeria.html` agrega su `instructivo`.
 
 ## Licencia de las piezas
 Las piezas participantes se publican bajo [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es), aceptada por cada persona al enviar.

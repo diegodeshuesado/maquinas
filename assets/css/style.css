@@ -263,3 +263,12 @@ h2 { font-weight: 400; font-size: 22px; margin: 48px 0 16px; }
 .conteo-luces.listo { color: var(--tinta); }
 
 .licencia { margin: 56px 0 0; font-size: 14px; color: var(--gris); }
+
+/* pines (ficciones_de_mi_barrio) */
+.pin { position: absolute; z-index: 8; width: 26px; height: 34px; margin: -34px 0 0 -13px; cursor: grab; touch-action: none; }
+.pin svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 1px 0 rgba(255,255,255,.8)); }
+.pin.arrastrando { cursor: grabbing; transform: scale(1.12); transform-origin: 50% 100%; }
+.lista-fotos { display: grid; gap: 8px; }
+.foto-fila { display: flex; gap: 10px; align-items: center; }
+.foto-fila img { width: 56px; height: 44px; object-fit: cover; border: 1px solid var(--linea); flex: none; }
+.foto-fila input { flex: 1; font: inherit; font-size: 14px; border: 1px solid var(--linea); border-radius: 0; background: var(--papel); padding: 8px 10px; color: var(--tinta); min-width: 0; }
