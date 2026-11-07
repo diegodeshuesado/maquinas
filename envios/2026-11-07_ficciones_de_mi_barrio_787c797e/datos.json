@@ -1,0 +1,70 @@
+{
+  "id": "2026-11-07_ficciones_de_mi_barrio_787c797e",
+  "maquina": "ficciones_de_mi_barrio",
+  "titulo": "asda",
+  "narrativa": "asda",
+  "ubicacion": "20.462, -100.634",
+  "alias": "asdasd",
+  "ciudad": "asd",
+  "fecha": "2026-11-07",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "aspecto": null,
+    "zona": {
+      "lat": 20.462,
+      "lng": -100.634,
+      "zoom": 17
+    },
+    "estilo": {
+      "trazo": "continua",
+      "color": "#141414",
+      "grosor": "medio"
+    },
+    "tarjetas": [
+      {
+        "id": "myyutps",
+        "x": 0.0656,
+        "y": 0.6137,
+        "w": 0.2,
+        "ar": 1.2939,
+        "label": "",
+        "coords": {
+          "lat": 20.462,
+          "lng": -100.634
+        },
+        "pin": {
+          "x": 0.4995,
+          "y": 0.5009
+        }
+      },
+      {
+        "id": "jasxfmu",
+        "x": 0.0878,
+        "y": 0.1048,
+        "w": 0.2,
+        "ar": 1.2939,
+        "label": "",
+        "coords": null,
+        "pin": {
+          "x": 0.5133,
+          "y": 0.5163
+        }
+      },
+      {
+        "id": "rn8vpql",
+        "x": 0.3989,
+        "y": 0.0063,
+        "w": 0.2,
+        "ar": 1.4156,
+        "label": "",
+        "coords": null,
+        "pin": {
+          "x": 0.8367,
+          "y": 0.5687
+        }
+      }
+    ],
+    "puntos": [],
+    "lineas": []
+  }
+}
