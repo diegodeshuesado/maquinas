@@ -56,7 +56,7 @@
   <!-- 2 · luces -->
   <section class="paso" data-paso="2" hidden>
     <h1 class="paso-t">ubicar las luces_</h1>
-    <p class="paso-d">recorre tu zona y fotografía dos o más luces: farolas, anuncios, ventanas. puedes titularlas o no.</p>
+    <p class="paso-d">recorre tu zona y fotografía tres o más luces: farolas, anuncios, ventanas. entre más luces, más interesante será el trazado. puedes titularlas o no.</p>
     <div class="herramientas">
       <label class="herr" for="camara">◉ cámara</label>
       <input id="camara" class="entrada-foto" type="file" accept="image/*" capture="environment" hidden>
@@ -67,6 +67,7 @@
     </div>
     <p class="ayuda" data-ayuda></p>
     <div data-slot></div>
+    <p class="conteo-luces" id="conteo-luces" aria-live="polite"></p>
   </section>
 
   <!-- 3 · dibujar -->

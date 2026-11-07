@@ -15,6 +15,7 @@
   const CFG = window.MAQUINAS_CONFIG || {};
   const CLAVE = 'maquinas_constelaciones_urbanas_v2';
   const TOTAL = 5;
+  const MIN_LUCES = 3;
   // mapa: CARTO (gris claro) si hay clave en config.js; si no, OpenStreetMap pasado a escala de grises
   const CLAVE_MAPA = String(CFG.MAPA_KEY || '').trim();
   const TESELAS = CFG.MAPA_TESELAS || (CLAVE_MAPA
@@ -271,7 +272,19 @@
   }));
 
   // ── pintar el tablero ─────────────────────────────────────────────────
+  function contarLuces() {
+    const el = $('#conteo-luces'); if (!el) return;
+    const n = estado.tarjetas.length;
+    if (!n) { el.textContent = ''; el.classList.remove('listo'); return; }
+    const listo = n >= MIN_LUCES;
+    el.classList.toggle('listo', listo);
+    el.textContent = listo
+      ? `${n} luces_ ✓ puedes seguir sumando más.`
+      : `${n} de ${MIN_LUCES} luces mínimo_ faltan ${MIN_LUCES - n}.`;
+  }
+
   function pintar() {
+    contarLuces();
     tablero.querySelectorAll('.nodo').forEach((n) => n.remove());
     vacio.style.display = estado.tarjetas.length || estado.puntos.length ? 'none' : '';
     const { W } = dims();
@@ -431,7 +444,7 @@
   // ── pasos ─────────────────────────────────────────────────────────────
   function validar(paso) {
     if (paso === 1 && !estado.zona) return 'fija tu zona en el mapa para continuar.';
-    if (paso === 2 && estado.tarjetas.length < 2) return 'fotografía al menos dos luces para continuar.';
+    if (paso === 2 && estado.tarjetas.length < MIN_LUCES) return `fotografía al menos ${MIN_LUCES} luces para continuar.`;
     if (paso === 3 && !estado.lineas.length) return 'traza al menos una línea entre tus luces.';
     if (paso === 4 && !campos.titulo.value.trim()) return 'falta el título de tu constelación.';
     if (paso === 4 && !campos.narrativa.value.trim()) return 'falta el mito de tu constelación.';

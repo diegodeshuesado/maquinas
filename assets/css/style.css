@@ -248,3 +248,16 @@ h2 { font-weight: 400; font-size: 22px; margin: 48px 0 16px; }
 .exito { margin-top: 8px; }
 .paso.enviado > :not(.exito) { display: none; }
 .exito .acciones .herr { display: inline-flex; align-items: center; }
+
+/* galería en carpetas */
+.carpetas.galeria { margin-top: 36px; }
+.carpetas.galeria .estado { margin: 12px 0 0 4px; }
+.carpeta.activa:hover svg path, .carpeta.activa:focus-visible svg path { stroke-width: 3.2; }
+.volver { display: inline-block; font-size: 14px; color: var(--gris); text-decoration: none; margin-bottom: 18px; }
+.volver:hover { text-decoration: underline; }
+.titulo-carpeta { display: flex; align-items: center; gap: 14px; }
+.titulo-carpeta svg { width: 44px; flex: none; }
+.titulo-carpeta h1 { font-size: clamp(22px, 5vw, 36px); margin: 0; overflow-wrap: anywhere; }
+#vista-maquina .sub { margin: 10px 0 32px; }
+.conteo-luces { font-size: 13px; margin: 12px 0 0; color: var(--gris); }
+.conteo-luces.listo { color: var(--tinta); }

@@ -36,11 +36,23 @@
     </nav>
   </header>
 
-  <h1 style="font-size:clamp(28px,5vw,44px)">galería_</h1>
-  <p class="sub">piezas enviadas por participantes · <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" rel="license">CC BY-NC-SA 4.0</a></p>
+  <div id="vista-carpetas">
+    <h1 style="font-size:clamp(28px,5vw,44px)">galería_</h1>
+    <p class="sub">elige una carpeta_ · piezas bajo <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" rel="license">CC BY-NC-SA 4.0</a></p>
+    <div class="carpetas galeria" id="carpetas"></div>
+  </div>
 
-  <div class="rejilla" id="rejilla"></div>
-  <p class="mensaje" id="estado-galeria"></p>
+  <div id="vista-maquina" hidden>
+    <a class="volver" href="galeria.html">← galería</a>
+    <div class="titulo-carpeta">
+      <svg viewBox="0 0 150 104" aria-hidden="true"><path d="M2 16 V102 H148 V16 H62 L50 2 H2 Z" fill="none" stroke="#141414" stroke-width="6" stroke-linejoin="round"/></svg>
+      <h1 id="nombre-maquina"></h1>
+    </div>
+    <p class="sub" id="conteo-maquina"></p>
+    <div class="rejilla" id="rejilla"></div>
+    <p class="mensaje" id="estado-galeria"></p>
+    <p id="participar" hidden style="margin-top:36px"><a class="boton" href="#">participar en esta máquina_ →</a></p>
+  </div>
 
   <footer class="pie-sitio">máquinas_ · Diego Deshuesado</footer>
 </div>
@@ -53,28 +65,64 @@
 
 <script>
 (async () => {
-  const rejilla = document.getElementById('rejilla');
-  const estado = document.getElementById('estado-galeria');
-  const visor = document.getElementById('visor');
-  const vimg = document.getElementById('visor-img');
-  const original = document.getElementById('visor-original');
+  const MAQUINAS = [
+    { id: 'constelaciones_urbanas', nombre: 'constelacio-<br>nes_urbanas', instructivo: 'constelaciones_urbanas.html' },
+    { id: 'un_pueblo_feliz', nombre: 'un_pue-<br>blo_feliz' },
+    { id: 'poe_arqui_lecturas', nombre: 'poe_arqui_<br>lecturas' },
+    { id: 'anar_quitecturas', nombre: 'anar_quitec-<br>turas' },
+    { id: 'no_poesia', nombre: 'no_poe-<br>sía' },
+    { id: 'ficciones_de_mi_barrio', nombre: 'ficciones_-<br>de_mi_barrio' },
+  ];
+  const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const plural = (n) => `${n} ${n === 1 ? 'pieza' : 'piezas'}`;
+  const carpeta = '<svg viewBox="0 0 150 104" aria-hidden="true"><path d="M2 16 V102 H148 V16 H62 L50 2 H2 Z" fill="none" stroke="#141414" stroke-width="2.2" stroke-linejoin="round"/><path d="M2 16 H62" stroke="#141414" stroke-width="2.2"/></svg>';
+
+  let piezas = [];
   try {
     const r = await fetch('envios/index.json', { cache: 'no-store' });
-    const piezas = r.ok ? await r.json() : [];
-    if (!piezas.length) { estado.textContent = 'aún no hay piezas aprobadas_ sé la primera persona en participar.'; return; }
-    rejilla.innerHTML = piezas.map((p) => `
+    piezas = r.ok ? await r.json() : [];
+  } catch { $('estado-galeria').textContent = 'no se pudo cargar la galería.'; }
+
+  const elegida = MAQUINAS.find((m) => m.id === new URLSearchParams(location.search).get('maquina'));
+
+  if (!elegida) {
+    // ── vista de carpetas ──
+    $('carpetas').innerHTML = MAQUINAS.map((m) => {
+      const n = piezas.filter((p) => p.maquina === m.id).length;
+      const activa = n > 0;
+      const tag = activa ? 'a' : 'div';
+      const href = activa ? ` href="galeria.html?maquina=${m.id}"` : '';
+      return `<${tag} class="carpeta ${activa ? 'activa' : 'inactiva'}"${href}>
+        ${carpeta}<span class="nombre">${m.nombre}</span>
+        <span class="estado">${activa ? `${plural(n)}_ →` : (m.instructivo ? 'aún sin piezas_' : 'próximamente_')}</span>
+      </${tag}>`;
+    }).join('');
+  } else {
+    // ── carpeta abierta ──
+    $('vista-carpetas').hidden = true;
+    $('vista-maquina').hidden = false;
+    const lista = piezas.filter((p) => p.maquina === elegida.id);
+    $('nombre-maquina').textContent = elegida.id;
+    document.title = `${elegida.id} · galería · máquinas_`;
+    $('conteo-maquina').innerHTML = `${plural(lista.length)} · <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" rel="license">CC BY-NC-SA 4.0</a>`;
+    if (elegida.instructivo) { $('participar').hidden = false; $('participar').querySelector('a').href = elegida.instructivo; }
+    if (!lista.length) $('estado-galeria').textContent = 'aún no hay piezas aprobadas_ sé la primera persona en participar.';
+    $('rejilla').innerHTML = lista.map((p) => `
       <button class="pieza" data-src="${esc(p.grande || p.imagen)}" data-original="${esc(p.imagen)}" data-alt="${esc(p.titulo)}">
         <img src="${esc(p.mini || p.imagen)}" alt="${esc(p.titulo)}" loading="lazy" decoding="async">
-        <span class="datos"><strong>${esc(p.titulo)}</strong>${esc(p.maquina)} · ${esc(p.alias || 'anónimo')}${p.ciudad ? ' · ' + esc(p.ciudad) : ''} · ${esc(p.fecha)}</span>
+        <span class="datos"><strong>${esc(p.titulo)}</strong>${esc(p.alias || 'anónimo')}${p.ciudad ? ' · ' + esc(p.ciudad) : ''} · ${esc(p.fecha)}</span>
       </button>`).join('');
-    rejilla.addEventListener('click', (e) => {
-      const b = e.target.closest('.pieza'); if (!b) return;
-      vimg.src = b.dataset.src; vimg.alt = b.dataset.alt; original.href = b.dataset.original; visor.classList.add('abierto');
-    });
-  } catch { estado.textContent = 'no se pudo cargar la galería.'; }
+  }
+
+  // ── visor ──
+  const visor = $('visor'), vimg = $('visor-img'), original = $('visor-original');
+  $('rejilla').addEventListener('click', (e) => {
+    const b = e.target.closest('.pieza'); if (!b) return;
+    vimg.src = b.dataset.src; vimg.alt = b.dataset.alt; original.href = b.dataset.original; visor.classList.add('abierto');
+  });
   const cerrar = () => visor.classList.remove('abierto');
-  document.getElementById('cerrar').addEventListener('click', cerrar);
+  $('cerrar').addEventListener('click', cerrar);
   visor.addEventListener('click', (e) => { if (e.target === visor) cerrar(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
 })();
