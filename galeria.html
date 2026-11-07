@@ -38,7 +38,7 @@
 
   <div id="vista-carpetas">
     <h1 style="font-size:clamp(28px,5vw,44px)">galería_</h1>
-    <p class="sub">elige una carpeta_ · piezas bajo <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" rel="license">CC BY-NC-SA 4.0</a></p>
+    <p class="sub">elige una carpeta_</p>
     <div class="carpetas galeria" id="carpetas"></div>
   </div>
 
@@ -53,6 +53,8 @@
     <p class="mensaje" id="estado-galeria"></p>
     <p id="participar" hidden style="margin-top:36px"><a class="boton" href="#">participar en esta máquina_ →</a></p>
   </div>
+
+  <p class="licencia">piezas bajo <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" rel="license">CC BY-NC-SA 4.0</a></p>
 
   <footer class="pie-sitio">máquinas_ · Diego Deshuesado</footer>
 </div>
@@ -105,7 +107,7 @@
     const lista = piezas.filter((p) => p.maquina === elegida.id);
     $('nombre-maquina').textContent = elegida.id;
     document.title = `${elegida.id} · galería · máquinas_`;
-    $('conteo-maquina').innerHTML = `${plural(lista.length)} · <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" rel="license">CC BY-NC-SA 4.0</a>`;
+    $('conteo-maquina').textContent = plural(lista.length);
     if (elegida.instructivo) { $('participar').hidden = false; $('participar').querySelector('a').href = elegida.instructivo; }
     if (!lista.length) $('estado-galeria').textContent = 'aún no hay piezas aprobadas_ sé la primera persona en participar.';
     $('rejilla').innerHTML = lista.map((p) => `

@@ -261,3 +261,5 @@ h2 { font-weight: 400; font-size: 22px; margin: 48px 0 16px; }
 #vista-maquina .sub { margin: 10px 0 32px; }
 .conteo-luces { font-size: 13px; margin: 12px 0 0; color: var(--gris); }
 .conteo-luces.listo { color: var(--tinta); }
+
+.licencia { margin: 56px 0 0; font-size: 14px; color: var(--gris); }
