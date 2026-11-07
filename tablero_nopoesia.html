@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="version" content="__VERSION__">
+<script>
+/* si hay una versión más nueva publicada, recarga una vez para no quedarse con la copia vieja del navegador */
+(function () {
+  function revisar() {
+  var v = document.querySelector('meta[name=version]').content;
+  if (v.indexOf('__') === 0 || !window.fetch) return;
+  fetch('version.txt?' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.text() : ''; })
+    .then(function (t) {
+      t = t.trim();
+      try { if (!t || t === v || sessionStorage.getItem('maquinas_recarga') === t) return; sessionStorage.setItem('maquinas_recarga', t); } catch (e) { return; }
+      var u = new URL(location.href); u.searchParams.set('v', t); location.replace(u.toString());
+    })
+    .catch(function () {});
+  }
+  revisar();
+  /* al regresar con «atrás», Safari muestra la página guardada sin volver a revisar */
+  window.addEventListener('pageshow', function (e) { if (e.persisted) revisar(); });
+})();
+</script>
+
+<title>no_poesía · máquinas_</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+</head>
+<body data-maquina="no_poesia">
+<div class="envoltura asistente">
+  <header class="cab">
+    <a class="marca-chica" href="./">máquinas_</a>
+    <a class="maq" href="no_poesia.html">no_poesía</a>
+  </header>
+  <div class="fila-progreso">
+    <button class="enlace" id="reiniciar" hidden>empezar de nuevo_</button>
+    <p class="progreso" id="progreso" aria-live="polite">■□□□ 1/4</p>
+  </div>
+
+  <!-- 1 · poema -->
+  <section class="paso" data-paso="1">
+    <h1 class="paso-t">elegir el poema_</h1>
+    <p class="paso-d">busca un poema por poeta o palabra, deja que el azar elija, o pega uno propio. puedes quitar o cambiar versos.</p>
+    <div class="buscador">
+      <input id="ws-q" type="search" placeholder="poeta o palabra" aria-label="buscar poesía" enterkeyhint="search">
+      <button class="herr on" type="button" id="ws-buscar">buscar_</button>
+      <button class="herr" type="button" id="ws-azar">al azar_</button>
+    </div>
+    <p class="ayuda" id="ws-estado" aria-live="polite"></p>
+    <div class="resultados" id="ws-resultados"></div>
+    <div class="poema" id="ws-poema" hidden>
+      <p class="poema-t" id="ws-poema-t"></p>
+      <div class="versos" id="ws-versos"></div>
+      <button class="boton" type="button" id="ws-usar">usar este poema_ ↓</button>
+    </div>
+    <div class="campo" style="margin-top:28px">
+      <label for="poema">tu poema:/&lt; <span class="nota-in" id="n-versos"></span></label>
+      <textarea id="poema" class="poema-txt" maxlength="4000" placeholder="un verso por renglón; deja un renglón vacío entre estrofas"></textarea>
+    </div>
+    <p style="margin-top:14px"><button class="enlace" type="button" id="fuera" style="padding:0">lo tengo en un libro o en papel_ →</button></p>
+    <p class="ayuda" id="fuera-ok" hidden>de acuerdo_ tendrás tu poema a la mano mientras escribes.</p>
+  </section>
+
+  <!-- 2 · escribir sin letras -->
+  <section class="paso" data-paso="2" hidden>
+    <h1 class="paso-t">escribir sin letras_</h1>
+    <p class="paso-d">deja que la muñeca se mueva y el trazo se deslice, mientras meditas o dices en voz alta el verso que escribes.</p>
+    <div class="herramientas">
+      <button class="herr" type="button" data-modo-esc="verso">verso por verso</button>
+      <button class="herr" type="button" data-modo-esc="hoja">hoja libre</button>
+      <button class="herr" type="button" data-modo-esc="papel">◉ en papel</button>
+    </div>
+
+    <div id="panel-verso" hidden>
+      <p class="verso-actual"><span class="ayuda" id="verso-num"></span><span id="verso-txt"></span></p>
+      <p class="ayuda">dilo o medítalo mientras trazas_</p>
+    </div>
+    <div id="panel-hoja" hidden>
+      <div class="poema-gris versos" id="poema-gris"></div>
+    </div>
+
+    <div id="panel-trazo">
+      <canvas class="hoja-asemica" id="lienzo" aria-label="espacio para escribir sin letras"></canvas>
+      <div class="herramientas abajo">
+        <button class="herr chica" type="button" data-pluma="pluma">pluma</button>
+        <button class="herr chica" type="button" data-pluma="plumon">plumón</button>
+        <button class="herr chica" type="button" data-pluma="pincel">pincel</button>
+        <button class="herr chica" type="button" id="deshacer" aria-label="deshacer">↶</button>
+        <button class="herr chica" type="button" id="borrar">borrar renglón</button>
+      </div>
+      <div class="nav-versos" id="nav-versos">
+        <button class="herr" type="button" id="verso-ant">← verso</button>
+        <button class="boton" type="button" id="verso-sig">siguiente verso_ →</button>
+      </div>
+      <p class="ayuda" id="verso-nota"></p>
+      <figure class="pagina-mini" id="pagina-mini" hidden>
+        <figcaption class="ayuda">tu página_</figcaption>
+        <img alt="tu página escrita hasta ahora">
+      </figure>
+    </div>
+
+    <div id="panel-papel" hidden>
+      <p class="paso-d">escribe el poema a mano, sin letras, con pluma o plumón, y fotografía la hoja.</p>
+      <div class="herramientas">
+        <label class="herr" for="papel-camara">◉ cámara</label>
+        <input id="papel-camara" class="entrada-papel" type="file" accept="image/*" capture="environment" hidden>
+        <label class="herr" for="papel-galeria">+ galería</label>
+        <input id="papel-galeria" class="entrada-papel" type="file" accept="image/*" hidden>
+      </div>
+      <img class="papel-vista" id="papel-vista" alt="tu hoja escrita a mano" hidden>
+    </div>
+  </section>
+
+  <!-- 3 · nombrar -->
+  <section class="paso" data-paso="3" hidden>
+    <h1 class="paso-t">nombrar_</h1>
+    <p class="paso-d">ponle título a tu no_poesía. si quieres, agrega una nota.</p>
+    <div class="campos">
+      <div class="campo">
+        <label for="f-titulo">título:/&lt;</label>
+        <input id="f-titulo" maxlength="80" placeholder="nombre de tu no_poesía">
+      </div>
+      <div class="campo">
+        <label for="f-narrativa">nota:/&lt; <span class="nota-in">(opcional)</span></label>
+        <textarea id="f-narrativa" maxlength="3000" placeholder="lo que pasó mientras escribías…"></textarea>
+      </div>
+    </div>
+    <figure class="vista"><img id="vista-nombrar" alt="tu no_poesía"></figure>
+  </section>
+
+  <!-- 4 · revisar y enviar -->
+  <section class="paso" data-paso="4" hidden>
+    <h1 class="paso-t">revisar y enviar_</h1>
+    <p class="paso-d">así se verá tu pieza. el poema original no aparece.</p>
+    <div class="fila">
+      <div class="campo">
+        <label for="f-alias">nombre/alias:/&lt;</label>
+        <input id="f-alias" maxlength="60" placeholder="opcional">
+      </div>
+      <div class="campo">
+        <label for="f-ciudad">ciudad:/&lt;</label>
+        <input id="f-ciudad" maxlength="60" placeholder="opcional">
+      </div>
+    </div>
+    <figure class="vista">
+      <img id="vista" alt="vista previa de tu pieza">
+      <figcaption class="ayuda" id="vista-estado">componiendo pieza_</figcaption>
+    </figure>
+    <form id="formulario" autocomplete="off">
+      <div class="trampa" aria-hidden="true"><label>no llenar <input name="website" tabindex="-1" autocomplete="off"></label></div>
+      <label class="consent">
+        <input type="checkbox" id="f-consent">
+        <span>acepto publicar mi pieza en máquinas_ bajo la licencia
+        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
+        (crédito, sin uso comercial, compartir igual).</span>
+      </label>
+      <div id="turnstile"></div>
+      <div class="acciones">
+        <button type="button" class="herr" id="exportar">descargar png_</button>
+        <button type="submit" class="boton" id="enviar">enviar pieza_ →</button>
+      </div>
+      <p class="mensaje" id="mensaje" aria-live="polite"></p>
+    </form>
+    <div class="exito" id="exito" hidden>
+      <p class="paso-t" style="margin-top:8px">envío recibido_</p>
+      <p class="paso-d">gracias. tu no_poesía aparecerá en la galería cuando sea aprobada.</p>
+      <div class="acciones">
+        <button class="boton" id="nueva">nueva no_poesía_ →</button>
+        <a class="herr" href="galeria.html?maquina=no_poesia" style="text-decoration:none">ver galería_</a>
+      </div>
+    </div>
+  </section>
+
+  <p class="mensaje error" id="aviso" aria-live="assertive"></p>
+  <nav class="pasos-nav">
+    <button class="herr" id="anterior">← anterior</button>
+    <button class="boton" id="siguiente">siguiente →</button>
+  </nav>
+</div>
+
+<script src="config.js?v=__VERSION__"></script>
+<script src="assets/js/asemica.js?v=__VERSION__"></script>
+</body>
+</html>

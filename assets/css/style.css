@@ -357,3 +357,17 @@ h2 { font-weight: 400; font-size: 22px; margin: 48px 0 16px; }
 #mapa-galeria { width: 100%; aspect-ratio: 4 / 3; border: 1px solid var(--linea); }
 .marca-foto { width: 46px !important; height: 46px !important; margin: -23px 0 0 -23px !important; border: 1.5px solid var(--tinta); background: var(--papel); overflow: hidden; }
 .leaflet-container .leaflet-marker-pane .marca-foto img { width: 100% !important; height: 100% !important; object-fit: cover; object-position: 50% 32%; }
+
+/* no_poesía */
+.poema-txt { min-height: 220px !important; line-height: 1.5; }
+.verso-actual { display: flex; flex-direction: column; gap: 4px; margin: 18px 0 2px; font-size: 18px; line-height: 1.35; }
+.verso-actual .ayuda { margin: 0; }
+.hoja-asemica { display: block; width: 100%; border: 1px solid var(--linea); background: #fbfaf7; touch-action: none; cursor: crosshair; margin-top: 8px; }
+.nav-versos { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
+#panel-hoja:not([hidden]) ~ #panel-trazo .nav-versos { display: none; }
+.poema-gris { max-height: 160px; color: var(--gris); border-left: 1px solid var(--linea); margin: 14px 0 0; }
+.poema-gris .verso { font-size: 13px; line-height: 1.4; padding: 1px 10px; }
+.pagina-mini { margin: 22px 0 0; }
+.pagina-mini img { width: min(320px, 100%); border: 1px solid var(--linea); }
+.papel-vista { max-height: 420px; width: auto; max-width: 100%; border: 1px solid var(--linea); margin-top: 12px; }
+.nota-asemica { font-size: 13px; color: var(--gris); margin-top: 22px; }

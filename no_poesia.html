@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="version" content="__VERSION__">
+<script>
+/* si hay una versión más nueva publicada, recarga una vez para no quedarse con la copia vieja del navegador */
+(function () {
+  function revisar() {
+  var v = document.querySelector('meta[name=version]').content;
+  if (v.indexOf('__') === 0 || !window.fetch) return;
+  fetch('version.txt?' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.text() : ''; })
+    .then(function (t) {
+      t = t.trim();
+      try { if (!t || t === v || sessionStorage.getItem('maquinas_recarga') === t) return; sessionStorage.setItem('maquinas_recarga', t); } catch (e) { return; }
+      var u = new URL(location.href); u.searchParams.set('v', t); location.replace(u.toString());
+    })
+    .catch(function () {});
+  }
+  revisar();
+  /* al regresar con «atrás», Safari muestra la página guardada sin volver a revisar */
+  window.addEventListener('pageshow', function (e) { if (e.persisted) revisar(); });
+})();
+</script>
+
+<title>no_poesía · máquinas_</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+</head>
+<body>
+<div class="envoltura">
+  <header class="cabeza">
+    <a class="marca" href="./">máquinas_</a>
+    <nav>
+      <a href="./">inicio</a>
+      <a href="galeria.html">galería</a>
+    </nav>
+  </header>
+
+  <article class="hoja">
+    <h3>Máquina_<wbr>no_<wbr>poesía.</h3>
+    <p class="credito">Diego Deshuesado</p>
+
+    <p><strong>Operación:/&lt;</strong> Reescribir poesía con escritura asémica*.</p>
+
+    <p><strong>Materiales:</strong> un poema y un celular (o pluma, plumón y papel).</p>
+
+    <p class="etiqueta">Materialización:</p>
+    <ol>
+      <li>Elegir un poema: al gusto o al azar en el buscador de la máquina, o uno propio.</li>
+      <li>Escribir el poema sin letras, verso por verso: dejar que la muñeca se mueva y el trazo se deslice, mientras se medita o se dice en voz alta el verso que se está escribiendo.</li>
+      <li>Nombrar la no_poesía.</li>
+      <li>Revisar y enviar.</li>
+    </ol>
+
+    <p><strong>Entrega:/&lt;</strong> la pieza se arma y se envía en el tablero.</p>
+    <p class="nota-asemica">*Esta escritura tiene un particular poder de fascinación por atípica y misteriosa, ya que invita a encontrar en ella sentidos ocultos.</p>
+  </article>
+
+  <p style="margin-top:32px"><a class="boton" href="tablero_nopoesia.html">comenzar_ →</a></p>
+
+  <footer class="pie-sitio">máquinas_ · Diego Deshuesado</footer>
+</div>
+</body>
+</html>

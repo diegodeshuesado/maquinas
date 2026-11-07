@@ -14,6 +14,8 @@ poe_arqui_lecturas.html     instructivo
 tablero_poe.html            poe_arqui_lecturas: zona → poesía (buscador Wikisource) → fotos con pines numerados → fragmentos en orden → enviar
 anar_quitecturas.html       instructivo
 tablero_anar.html           anar_quitecturas: imagen (cámara, galería o imágenes libres de Wikimedia Commons) → intervenir (trazo, texto, stickers) → nombrar → ubicar (opcional) → enviar
+no_poesia.html              instructivo
+tablero_nopoesia.html       no_poesia: poema (Wikisource o propio) → escribir sin letras (verso por verso, hoja libre o foto en papel) → nombrar → enviar
 galeria.html                piezas aprobadas (anar_quitecturas también en mapa)
 config.js                   ← aquí pegas la URL del Worker y la clave de Turnstile
 assets/                     estilos, script del tablero, fotos de la expo
