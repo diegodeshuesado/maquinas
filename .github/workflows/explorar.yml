@@ -6,15 +6,22 @@ jobs:
   ver:
     runs-on: ubuntu-latest
     steps:
-      - name: sesnsp
+      - name: nueva metodologia
         run: |
-          curl -sSL -A "Mozilla/5.0" https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva -o p.html; ls -la p.html
-          grep -oE 'href="[^"]+"[^>]*>[^<]{0,120}' p.html | grep -iE 'drive|csv|zip|xls|v[ií]ctima|metodolog|datos' | head -60
-          grep -oiE '[^<>]{0,80}(nueva metodolog|v[ií]ctimas)[^<>]{0,80}' p.html | head -30
-      - name: rnpdno
+          curl -sSL -A "Mozilla/5.0" "https://www.gob.mx/sesnsp/articulos/nueva-metodologia-para-el-registro-y-clasificacion-de-los-delitos-y-las-victimas-para-fines-estadisticos?state=published" -o n.html; ls -la n.html
+          grep -oE 'href="[^"]+"[^>]*>[^<]{0,160}' n.html | grep -iE 'sharepoint|drive|csv|zip|xls|onedrive' | head -40
+          curl -sSL -A "Mozilla/5.0" "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva" -o p.html
+          grep -oE 'href="[^"]+"[^>]*>[^<]{0,160}' p.html | grep -iE 'sharepoint' | head -40
+      - name: probar descarga sharepoint
+        continue-on-error: true
         run: |
-          curl -sSL -A "Mozilla/5.0" -o r.html -w "%{http_code}\n" https://versionpublica.cnb.gob.mx/ ; head -c 1500 r.html; echo
-          grep -oE '(src|href)="[^"]+"' r.html | head -30
-      - name: gabinete
+          for u in $(grep -oE 'https://sspcgob-my.sharepoint.com/[^"]+' n.html p.html | cut -d: -f2- | sort -u | head -12); do
+            u=$(echo "$u" | sed 's/&amp;/\&/g'); d="$u&download=1"
+            code=$(curl -sSL -A "Mozilla/5.0" -o f.bin -w "%{http_code} %{content_type} %{size_download}" "$d")
+            echo "== $u"; echo "   $code"; file f.bin | cut -c1-120; head -c 300 f.bin | tr -d '\0' | head -3; echo
+          done
+      - name: otras
+        continue-on-error: true
         run: |
-          curl -sSL -A "Mozilla/5.0" -o g.html -w "%{http_code}\n" https://gabinetedeseguridad.gob.mx/homicidios/ ; grep -oE '(src|href)="[^"]+"' g.html | head -40
+          for u in https://versionpublica.cnb.gob.mx/ https://gabinetedeseguridad.gob.mx/homicidios/ https://www.datos.gob.mx/api/3/action/package_search?q=incidencia+delictiva https://datos.gob.mx/api/3/action/package_search?q=victimas ; do
+            echo "== $u"; curl -sSL -A "Mozilla/5.0" -o o.html -w "%{http_code} %{content_type}\n" "$u" || true; head -c 600 o.html; echo; done
