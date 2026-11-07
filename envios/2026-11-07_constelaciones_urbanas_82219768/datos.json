@@ -1,0 +1,77 @@
+{
+  "id": "2026-11-07_constelaciones_urbanas_82219768",
+  "maquina": "constelaciones_urbanas",
+  "titulo": "It hurt’s so bad",
+  "narrativa": "Eran tiempos oscuros en lo que no se sabía del lado complementario de del mi do de su luz bastó incidirlo en la humedad ofrendar un café y unas flautas para que la luz llegara y erigiera ciudades donde escribimos nuestra historia ❤️‍🔥",
+  "ubicacion": "20.593, -100.392",
+  "alias": "1tbsp",
+  "ciudad": "Una galaxia lejana (no topas)",
+  "fecha": "2026-11-07",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "aspecto": null,
+    "zona": {
+      "lat": 20.593,
+      "lng": -100.392,
+      "zoom": 15
+    },
+    "estilo": {
+      "trazo": "discontinua",
+      "color": "#ffffff",
+      "grosor": "fino"
+    },
+    "tarjetas": [
+      {
+        "id": "ujb1jg1",
+        "x": 0.0921,
+        "y": 0.0478,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": null
+      },
+      {
+        "id": "tk8w68m",
+        "x": 0.6166,
+        "y": 0.032,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": null
+      },
+      {
+        "id": "gtnao9d",
+        "x": 0.0649,
+        "y": 0.4598,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": null
+      },
+      {
+        "id": "2j9l1k9",
+        "x": 0.5972,
+        "y": 0.5075,
+        "w": 0.3,
+        "ar": 1.7766,
+        "label": "",
+        "coords": null
+      }
+    ],
+    "puntos": [],
+    "lineas": [
+      [
+        "ujb1jg1",
+        "2j9l1k9"
+      ],
+      [
+        "2j9l1k9",
+        "gtnao9d"
+      ],
+      [
+        "gtnao9d",
+        "tk8w68m"
+      ]
+    ]
+  }
+}
