@@ -61,7 +61,7 @@
   <!-- 2 · poesía -->
   <section class="paso" data-paso="2" hidden>
     <h1 class="paso-t">conseguir la poesía_</h1>
-    <p class="paso-d">busca poemas por poeta o palabra, o deja que el azar elija. guarda los que quieras usar.</p>
+    <p class="paso-d">busca poemas por poeta o palabra, o deja que el azar elija. toca los versos que quieras usar (¶ elige la estrofa completa) y guárdalos.</p>
     <div class="buscador">
       <input id="ws-q" type="search" placeholder="poeta o palabra" aria-label="buscar poesía" enterkeyhint="search">
       <button class="herr on" id="ws-buscar">buscar_</button>
@@ -74,7 +74,7 @@
       <div class="versos" id="ws-versos"></div>
       <button class="boton" id="ws-guardar">guardar poema_ +</button>
     </div>
-    <p class="etiqueta-poesia">tu poesía:/&lt; <span id="n-poemas">0 poemas</span></p>
+    <p class="etiqueta-poesia">tu poesía:/&lt; <span id="n-poemas">0 fragmentos</span></p>
     <div class="mis-poemas" id="mis-poemas"></div>
     <details class="propio">
       <summary>+ pegar un texto propio</summary>
@@ -98,6 +98,10 @@
     <p class="ayuda" data-ayuda></p>
     <div data-slot></div>
     <p class="conteo-luces" id="conteo-luces" aria-live="polite"></p>
+    <div class="poesia-ref" id="poesia-ref" hidden>
+      <p class="etiqueta-poesia">tu poesía:/&lt; <span class="nota-in">léela y busca imágenes que se relacionen</span></p>
+      <div id="poesia-ref-lista"></div>
+    </div>
   </section>
 
   <!-- 4 · renombrar -->

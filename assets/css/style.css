@@ -293,7 +293,16 @@ h2 { font-weight: 400; font-size: 22px; margin: 48px 0 16px; }
 .selector .verso.sel { background: var(--tinta); color: var(--muro); }
 .etiqueta-poesia { font-size: 15px; margin: 28px 0 6px; }
 .mis-poemas { border-top: 1px solid var(--linea); }
-.mi-poema { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d6d5d0; padding: 8px 2px; font-size: 14px; }
+.mi-poema { border-bottom: 1px solid #d6d5d0; padding: 10px 2px; font-size: 14px; }
+.mi-poema-cab { display: flex; justify-content: space-between; align-items: center; color: var(--gris); font-size: 13px; }
+.mi-poema-versos .verso { padding: 1px 0; }
+.mi-poema-versos .verso.vacio { height: 8px; }
+.estrofa { position: relative; padding-left: 28px; }
+.estrofa .parrafo { position: absolute; left: 0; top: 2px; width: 22px; height: 22px; padding: 0; font: inherit; font-size: 13px; color: var(--gris); background: none; border: 1px solid var(--linea); cursor: pointer; }
+#ws-versos .verso { cursor: pointer; }
+#ws-versos .verso.sel { background: var(--tinta); color: var(--muro); }
+.poesia-ref { margin-top: 28px; }
+.poesia-ref #poesia-ref-lista { max-height: 320px; overflow: auto; border-top: 1px solid var(--tinta); }
 .mi-poema .quitar { font: inherit; background: none; border: 0; font-size: 18px; color: var(--gris); cursor: pointer; padding: 0 6px; }
 .propio { margin-top: 14px; }
 .propio summary { display: inline-block; font-size: 14px; border: 1px solid var(--tinta); padding: 7px 12px; cursor: pointer; list-style: none; }

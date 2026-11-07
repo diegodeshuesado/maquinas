@@ -555,7 +555,7 @@
   // ── pasos ─────────────────────────────────────────────────────────────
   function validar(paso) {
     if (paso === 1 && !estado.zona) return 'fija tu zona en el mapa para continuar.';
-    if (paso === M.pasoPoesia && !estado.poemas.length) return 'guarda al menos un poema para continuar.';
+    if (paso === M.pasoPoesia && !estado.poemas.length) return 'guarda al menos un fragmento para continuar.';
     if (paso === M.pasoFotos && estado.tarjetas.length < MIN_LUCES) return M.faltanFotos(MIN_LUCES);
     if (paso === 3 && M.lineas && !estado.lineas.length) return 'traza al menos una línea entre tus luces.';
     if (paso === 4 && !campos.titulo.value.trim()) return M.faltaTitulo;
@@ -659,29 +659,60 @@
   }
 
   let poemaAbierto = null;
+  // un fragmento guardado se puede leer completo; también sirve de referencia en el paso de las fotos
+  function bloquePoesia(p, quitar) {
+    const fila = document.createElement('div'); fila.className = 'mi-poema';
+    const cab = document.createElement('div'); cab.className = 'mi-poema-cab';
+    const t = document.createElement('span'); t.textContent = p.titulo; cab.appendChild(t);
+    if (quitar) {
+      const x = document.createElement('button'); x.className = 'quitar'; x.textContent = '×'; x.setAttribute('aria-label', `quitar ${p.titulo}`);
+      x.addEventListener('click', () => { estado.poemas = estado.poemas.filter((q) => q.id !== p.id); guardar(); pintarPoesia(); });
+      cab.appendChild(x);
+    }
+    const v = document.createElement('div'); v.className = 'mi-poema-versos';
+    p.versos.forEach((l) => { const d = document.createElement('p'); d.className = l ? 'verso' : 'verso vacio'; d.textContent = l || ' '; v.appendChild(d); });
+    fila.append(cab, v);
+    return fila;
+  }
   function pintarPoesia() {
     const caja = $('#mis-poemas'); if (!caja) return;
     caja.innerHTML = '';
-    estado.poemas.forEach((p) => {
-      const fila = document.createElement('div'); fila.className = 'mi-poema';
-      const t = document.createElement('span'); t.textContent = p.titulo;
-      const x = document.createElement('button'); x.className = 'quitar'; x.textContent = '×'; x.setAttribute('aria-label', `quitar ${p.titulo}`);
-      x.addEventListener('click', () => { estado.poemas = estado.poemas.filter((q) => q.id !== p.id); guardar(); pintarPoesia(); });
-      fila.append(t, x); caja.appendChild(fila);
-    });
+    estado.poemas.forEach((p) => caja.appendChild(bloquePoesia(p, true)));
     const n = estado.poemas.length;
-    $('#n-poemas').textContent = `${n} ${n === 1 ? 'poema' : 'poemas'}`;
+    $('#n-poemas').textContent = `${n} ${n === 1 ? 'fragmento' : 'fragmentos'}`;
   }
+  function pintarPoesiaRef() {
+    const caja = $('#poesia-ref'); if (!caja) return;
+    caja.hidden = !estado.poemas.length;
+    const lista = $('#poesia-ref-lista'); lista.innerHTML = '';
+    estado.poemas.forEach((p) => lista.appendChild(bloquePoesia(p, false)));
+  }
+  // el poema abierto: toca versos (o ¶ para la estrofa completa) y guarda solo lo elegido
   function abrirPoema(p) {
     poemaAbierto = p;
     $('#ws-poema').hidden = false;
     $('#ws-poema-t').textContent = p.titulo;
     const v = $('#ws-versos'); v.innerHTML = '';
-    p.versos.forEach((l) => { const d = document.createElement('p'); d.className = l ? 'verso' : 'verso vacio'; d.textContent = l || ' '; v.appendChild(d); });
-    const ya = estado.poemas.some((q) => q.titulo === p.titulo && q.versos.join('\n') === p.versos.join('\n'));
-    $('#ws-guardar').textContent = ya ? 'guardado_ ✓' : 'guardar poema_ +';
-    $('#ws-guardar').disabled = ya;
+    let estrofa = null;
+    p.versos.forEach((l, i) => {
+      if (!l) { estrofa = null; const d = document.createElement('p'); d.className = 'verso vacio'; d.textContent = ' '; v.appendChild(d); return; }
+      if (!estrofa) {
+        estrofa = document.createElement('div'); estrofa.className = 'estrofa';
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'parrafo'; b.textContent = '¶'; b.setAttribute('aria-label', 'elegir la estrofa completa');
+        const e = estrofa;
+        b.addEventListener('click', () => { const vs = [...e.querySelectorAll('.verso')], todos = vs.every((x) => x.classList.contains('sel')); vs.forEach((x) => x.classList.toggle('sel', !todos)); contarSel(); });
+        estrofa.appendChild(b); v.appendChild(estrofa);
+      }
+      const d = document.createElement('p'); d.className = 'verso'; d.textContent = l; d.dataset.i = i;
+      d.addEventListener('click', () => { d.classList.toggle('sel'); contarSel(); });
+      estrofa.appendChild(d);
+    });
+    contarSel();
     $('#ws-poema').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function contarSel() {
+    const n = $$('#ws-versos .verso.sel').length;
+    $('#ws-guardar').textContent = n ? `guardar ${n} ${n === 1 ? 'verso' : 'versos'}_ +` : 'guardar todo el poema_ +';
   }
   async function abrirTitulo(titulo) {
     $('#ws-estado').textContent = 'abriendo poema_';
@@ -725,8 +756,15 @@
     });
     $('#ws-guardar').addEventListener('click', () => {
       if (!poemaAbierto) return;
-      estado.poemas.push({ id: uid(), titulo: poemaAbierto.titulo, versos: poemaAbierto.versos });
+      const sel = $$('#ws-versos .verso.sel').map((d) => Number(d.dataset.i));
+      let versos = poemaAbierto.versos;
+      if (sel.length) {   // conserva los saltos entre partes no seguidas
+        versos = [];
+        sel.forEach((i, k) => { if (k && i !== sel[k - 1] + 1) versos.push(''); versos.push(poemaAbierto.versos[i]); });
+      }
+      estado.poemas.push({ id: uid(), titulo: poemaAbierto.titulo, versos });
       guardar(); pintarPoesia(); abrirPoema(poemaAbierto);
+      $('#ws-estado').textContent = 'guardado_ puedes elegir más versos o buscar otro poema.';
     });
     $('#propio-guardar').addEventListener('click', () => {
       const txt = $('#propio-txt').value.trim();
@@ -811,6 +849,7 @@
     if (paso >= 2 && paso <= 4) { fondoListo = null; pintarFondo(); }
     if (paso === 4) { pintarLista(); pintarListaPoe(); }
     if (paso === M.pasoPoesia) pintarPoesia();
+    if (M.poesia && paso === M.pasoFotos) pintarPoesiaRef();
     if (paso === TOTAL) actualizarVista();
     guardar();
     window.scrollTo({ top: 0, behavior: 'smooth' });
