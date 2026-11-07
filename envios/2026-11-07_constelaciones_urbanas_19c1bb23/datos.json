@@ -1,0 +1,57 @@
+{
+  "id": "2026-11-07_constelaciones_urbanas_19c1bb23",
+  "maquina": "constelaciones_urbanas",
+  "titulo": "Visión de los caídos",
+  "narrativa": "Habia una vez unas luces que reflejaban en la oscuridad de las noches de licenciado Parra parecían luces misteriosas que iluminaban el camino de quienes habían perdido la esperanza. Se decía que eran las almas de los caídos, convertidas en estrellas para guiar a los vivos.",
+  "ubicacion": "20.589, -100.378",
+  "alias": "Rodri",
+  "ciudad": "Querétaro",
+  "fecha": "2026-11-07",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "aspecto": null,
+    "zona": {
+      "lat": 20.589,
+      "lng": -100.378,
+      "zoom": 17
+    },
+    "estilo": {
+      "trazo": "continua",
+      "color": "#141414",
+      "grosor": "medio"
+    },
+    "tarjetas": [
+      {
+        "id": "1e2pbln",
+        "x": 0.2575,
+        "y": 0.236,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": {
+          "lat": 20.59,
+          "lng": -100.378
+        }
+      },
+      {
+        "id": "lv5oic1",
+        "x": 0.573,
+        "y": 0.2294,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": {
+          "lat": 20.59,
+          "lng": -100.378
+        }
+      }
+    ],
+    "puntos": [],
+    "lineas": [
+      [
+        "1e2pbln",
+        "lv5oic1"
+      ]
+    ]
+  }
+}
