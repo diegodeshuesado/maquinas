@@ -9,7 +9,7 @@
     constelaciones_urbanas: {
       titulo: 'máquina_constelaciones_urbanas', credito: 'Diego Deshuesado y Daniel Vázquez',
       narrativa: 'mito', sustantivo: 'constelación', clave: 'maquinas_constelaciones_urbanas_v2',
-      unidad: ['luz', 'luces'], opacidad: 0.35, lineas: true, pines: false,
+      unidad: ['luz', 'luces'], opacidad: 0.35, lineas: true, pines: false, pasoFotos: 2, pasoPines: 3,
       faltaTitulo: 'falta el título de tu constelación.', faltaNarrativa: 'falta el mito de tu constelación.',
       faltanFotos: (n) => `fotografía al menos ${n} luces para continuar.`,
       altFoto: 'foto de una luz',
@@ -23,7 +23,7 @@
     ficciones_de_mi_barrio: {
       titulo: 'máquina_ficciones_de_mi_barrio', credito: 'Diego Deshuesado',
       narrativa: 'historia', sustantivo: 'historia', clave: 'maquinas_ficciones_de_mi_barrio_v1',
-      unidad: ['foto', 'fotos'], opacidad: 0.6, lineas: false, pines: true,
+      unidad: ['foto', 'fotos'], opacidad: 0.6, lineas: false, pines: true, pasoFotos: 2, pasoPines: 3,
       faltaTitulo: 'falta el título de tu historia.', faltaNarrativa: 'falta tu historia.',
       faltanFotos: (n) => `toma al menos ${n} fotos para continuar.`,
       altFoto: 'foto de la colonia',
@@ -32,6 +32,20 @@
         pines: 'arrastra cada pin a la calle donde tomaste la foto. también puedes mover las fotos.',
         borrar: 'borrar_ toca una foto para quitarla junto con su pin.',
       },
+    },
+  };
+  MAQUINAS.poe_arqui_lecturas = {
+    titulo: 'máquina_poe_arqui_lecturas', credito: 'Diego Deshuesado',
+    narrativa: null, sustantivo: 'narración', clave: 'maquinas_poe_arqui_lecturas_v1',
+    unidad: ['foto', 'fotos'], opacidad: 0.6, lineas: false, pines: true, numeros: true, fragmentos: true, poesia: true,
+    pasoPoesia: 2, pasoFotos: 3, pasoPines: 3,
+    faltaTitulo: 'falta el título de tu narración.',
+    faltanFotos: (n) => `toma al menos ${n} fotos para continuar.`,
+    altFoto: 'foto de la zona',
+    ayudas: {
+      mover: 'mover_ arrastra las fotos y sus pines.',
+      pines: 'arrastra cada pin numerado a donde tomaste la foto. también puedes mover las fotos.',
+      borrar: 'borrar_ toca una foto para quitarla junto con su pin.',
     },
   };
   const ID = MAQUINAS[document.body.dataset.maquina] ? document.body.dataset.maquina : 'constelaciones_urbanas';
@@ -62,7 +76,7 @@
   // tarjeta: { id, src, ar, w, x, y, label, coords }  (x, y = esquina sup. izq. en fracción del tablero)
   // punto imaginario: { id, x, y }  (centro en fracción del tablero)
   const estadoInicial = () => ({
-    paso: 1, zona: null, tarjetas: [], puntos: [], lineas: [],
+    paso: 1, zona: null, tarjetas: [], puntos: [], lineas: [], poemas: [], orden: [],
     estilo: { trazo: 'continua', color: '#141414', grosor: 'medio' },
     campos: { titulo: '', narrativa: '', alias: '', ciudad: '' },
   });
@@ -76,10 +90,18 @@
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const tablero = $('#tablero'), svg = $('#lineas'), fondo = $('#fondo'), vacio = $('#vacio');
   const aviso = $('#aviso'), mensaje = $('#mensaje');
-  const campos = { titulo: $('#f-titulo'), narrativa: $('#f-narrativa'), alias: $('#f-alias'), ciudad: $('#f-ciudad') };
+  const campos = Object.fromEntries(Object.entries({ titulo: '#f-titulo', narrativa: '#f-narrativa', alias: '#f-alias', ciudad: '#f-ciudad' })
+    .map(([k, sel]) => [k, $(sel)]).filter(([, el]) => el));
+  // fotos en el orden de la secuencia (las que no estén en «orden» van al final)
+  const ordenadas = () => {
+    const porId = new Map(estado.tarjetas.map((t) => [t.id, t]));
+    const lista = (estado.orden || []).map((id) => porId.get(id)).filter(Boolean);
+    return lista.concat(estado.tarjetas.filter((t) => !lista.includes(t)));
+  };
+  const numero = (id) => ordenadas().findIndex((t) => t.id === id) + 1;
 
   const AYUDAS = M.ayudas;
-  const conPines = () => M.pines && estado.paso >= 3;
+  const conPines = () => M.pines && estado.paso >= (M.pasoPines || 3);
 
   const uid = () => Math.random().toString(36).slice(2, 9);
   // tamaño del tablero; si está oculto (paso 1 o 5) se usa el último tamaño visible
@@ -304,6 +326,7 @@
           t.ubicada = !!f;
         }
         estado.tarjetas.push(t);
+        estado.orden.push(t.id);
       } catch { aviso.textContent = 'no se pudo leer una de las imágenes.'; }
     }
     e.target.value = '';
@@ -337,6 +360,12 @@
       el.style.left = `${t.x * 100}%`; el.style.top = `${t.y * 100}%`; el.style.width = `${t.w * W}px`;
       const img = document.createElement('img');
       img.src = t.src; img.alt = t.label || M.altFoto; img.draggable = false;
+      if (M.numeros) {
+        const ced = document.createElement('span'); ced.className = 'ced-num'; ced.textContent = `${numero(t.id)}_`;
+        el.append(img, ced); tablero.appendChild(el);
+        if (t.src && (!imgs.has(t.id) || imgs.get(t.id).src !== t.src)) { const im = new Image(); im.src = t.src; imgs.set(t.id, im); }
+        continue;
+      }
       const inp = document.createElement('input');
       inp.value = t.label; inp.maxLength = 40; inp.placeholder = 'título_';
       inp.setAttribute('aria-label', 'título de esta foto');
@@ -357,7 +386,9 @@
         el.dataset.pin = t.id;
         el.style.left = `${t.pin.x * 100}%`; el.style.top = `${t.pin.y * 100}%`;
         el.title = 'arrastra el pin a la calle donde tomaste la foto';
-        el.innerHTML = '<svg viewBox="0 0 14 18" aria-hidden="true"><path d="M7 17 C7 17 1 10 1 6.5 A6 6 0 0 1 13 6.5 C13 10 7 17 7 17Z" fill="#141414" stroke="#fff" stroke-width="1.2"/><circle cx="7" cy="6.5" r="2" fill="#fff"/></svg>';
+        el.innerHTML = M.numeros
+          ? `<svg viewBox="0 0 14 18" aria-hidden="true"><path d="M7 17 C7 17 1 10 1 6.5 A6 6 0 0 1 13 6.5 C13 10 7 17 7 17Z" fill="#141414" stroke="#fff" stroke-width="1.2"/></svg><span class="pin-n">${numero(t.id)}</span>`
+          : '<svg viewBox="0 0 14 18" aria-hidden="true"><path d="M7 17 C7 17 1 10 1 6.5 A6 6 0 0 1 13 6.5 C13 10 7 17 7 17Z" fill="#141414" stroke="#fff" stroke-width="1.2"/><circle cx="7" cy="6.5" r="2" fill="#fff"/></svg>';
         tablero.appendChild(el);
       }
     }
@@ -460,6 +491,7 @@
     if (modo === 'borrar') {
       estado.tarjetas = estado.tarjetas.filter((x) => x.id !== id);
       estado.puntos = estado.puntos.filter((x) => x.id !== id);
+      estado.orden = (estado.orden || []).filter((x) => x !== id);
       imgs.delete(id); fotosDB.quitar(id); pintar(); guardar(); return;
     }
     if (modo === 'conectar') {
@@ -523,13 +555,19 @@
   // ── pasos ─────────────────────────────────────────────────────────────
   function validar(paso) {
     if (paso === 1 && !estado.zona) return 'fija tu zona en el mapa para continuar.';
-    if (paso === 2 && estado.tarjetas.length < MIN_LUCES) return M.faltanFotos(MIN_LUCES);
+    if (paso === M.pasoPoesia && !estado.poemas.length) return 'guarda al menos un poema para continuar.';
+    if (paso === M.pasoFotos && estado.tarjetas.length < MIN_LUCES) return M.faltanFotos(MIN_LUCES);
     if (paso === 3 && M.lineas && !estado.lineas.length) return 'traza al menos una línea entre tus luces.';
     if (paso === 4 && !campos.titulo.value.trim()) return M.faltaTitulo;
-    if (paso === 4 && !campos.narrativa.value.trim()) return M.faltaNarrativa;
+    if (paso === 4 && campos.narrativa && !campos.narrativa.value.trim()) return M.faltaNarrativa;
+    if (paso === 4 && M.fragmentos) {
+      const i = ordenadas().findIndex((t) => !(t.fragmento || '').trim());
+      if (i >= 0) return `falta el fragmento de la foto ${i + 1}.`;
+      if (textoNarrativa().length > 2900) return 'los fragmentos son demasiado largos; recórtalos un poco.';
+    }
     return null;
   }
-  const hayAvance = () => !!(estado.zona || estado.tarjetas.length || estado.puntos.length ||
+  const hayAvance = () => !!(estado.zona || estado.tarjetas.length || estado.puntos.length || estado.poemas.length ||
     estado.campos.titulo || estado.campos.narrativa);
 
   // borra la constelación de este navegador (fotos incluidas); alias y ciudad se conservan si se pide
@@ -569,6 +607,184 @@
     }
   }
 
+  // ── poesía (poe_arqui_lecturas) ───────────────────────────────────────
+  // los poemas vienen de Wikisource en español (dominio público); también se puede pegar un texto propio
+  const WS = 'https://es.wikisource.org/w/api.php';
+  const POETAS = [
+    'Sor Juana Inés de la Cruz', 'Rubén Darío', 'Amado Nervo', 'José Martí', 'Gustavo Adolfo Bécquer',
+    'Ramón López Velarde', 'Manuel Gutiérrez Nájera', 'José Asunción Silva', 'Julián del Casal', 'Rosalía de Castro',
+    'Garcilaso de la Vega', 'Luis de Góngora', 'Francisco de Quevedo', 'Lope de Vega', 'San Juan de la Cruz',
+    'Fray Luis de León', 'José de Espronceda', 'José Zorrilla', 'Manuel Acuña', 'Manuel José Othón',
+    'Delmira Agustini', 'Julio Herrera y Reissig', 'Gertrudis Gómez de Avellaneda', 'José María Heredia',
+    'Jorge Manrique', 'Santa Teresa de Jesús', 'Ricardo Palma', 'Juan de Dios Peza', 'Antonio Plaza', 'Salvador Rueda',
+  ];
+  const azar = (lista) => lista[Math.floor(Math.random() * lista.length)];
+  const textoNarrativa = () => ordenadas().map((t, i) => `${i + 1}. ${(t.fragmento || '').trim()}`).join('\n\n');
+
+  async function wsPedir(params) {
+    const u = new URL(WS);
+    Object.entries({ format: 'json', formatversion: '2', origin: '*', ...params }).forEach(([k, v]) => u.searchParams.set(k, v));
+    const r = await fetch(u.toString());
+    if (!r.ok) throw new Error(`wikisource ${r.status}`);
+    return r.json();
+  }
+  async function wsBuscar(q) {
+    const d = await wsPedir({ action: 'query', list: 'search', srsearch: `${q} insource:poem`, srnamespace: '0', srlimit: '30', srprop: 'size' });
+    return ((d.query && d.query.search) || []).filter((r) => r.size > 120 && r.size < 20000).map((r) => r.title);
+  }
+  const decodificar = (t) => { const a = document.createElement('textarea'); a.innerHTML = t; return a.value; };
+  function wsVersos(wt) {
+    const bloques = [...wt.matchAll(/<poem[^>]*>([\s\S]*?)<\/poem>/gi)].map((m) => m[1]);
+    let t = bloques.length ? bloques.join('\n\n') : wt;
+    t = t.replace(/<!--[\s\S]*?-->/g, '').replace(/<ref[^>]*\/>/gi, '').replace(/<ref[\s\S]*?<\/ref>/gi, '');
+    for (let i = 0; i < 4; i++) t = t.replace(/\{\{[^{}]*\}\}/g, '');
+    t = t.replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').replace(/\[https?:[^\s\]]+ ?([^\]]*)\]/g, '$1')
+      .replace(/'{2,}/g, '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
+      .replace(/^=+[^=\n]*=+\s*$/gm, '').replace(/^[:;*#]+\s*/gm, '').replace(/__[A-Z]+__/g, '');
+    t = decodificar(t);
+    const lineas = t.split('\n').map((l) => l.replace(/\s+/g, ' ').trim());
+    const out = [];
+    for (const l of lineas) { if (l || (out.length && out[out.length - 1])) out.push(l); }
+    while (out.length && !out[out.length - 1]) out.pop();
+    return out;
+  }
+  async function wsPoema(titulo) {
+    const d = await wsPedir({ action: 'parse', page: titulo, prop: 'wikitext', redirects: '1' });
+    const versos = wsVersos((d.parse && d.parse.wikitext) || '');
+    if (versos.filter(Boolean).length < 2) throw new Error('sin versos');
+    return { titulo: titulo.split('/').pop(), versos };
+  }
+
+  let poemaAbierto = null;
+  function pintarPoesia() {
+    const caja = $('#mis-poemas'); if (!caja) return;
+    caja.innerHTML = '';
+    estado.poemas.forEach((p) => {
+      const fila = document.createElement('div'); fila.className = 'mi-poema';
+      const t = document.createElement('span'); t.textContent = p.titulo;
+      const x = document.createElement('button'); x.className = 'quitar'; x.textContent = '×'; x.setAttribute('aria-label', `quitar ${p.titulo}`);
+      x.addEventListener('click', () => { estado.poemas = estado.poemas.filter((q) => q.id !== p.id); guardar(); pintarPoesia(); });
+      fila.append(t, x); caja.appendChild(fila);
+    });
+    const n = estado.poemas.length;
+    $('#n-poemas').textContent = `${n} ${n === 1 ? 'poema' : 'poemas'}`;
+  }
+  function abrirPoema(p) {
+    poemaAbierto = p;
+    $('#ws-poema').hidden = false;
+    $('#ws-poema-t').textContent = p.titulo;
+    const v = $('#ws-versos'); v.innerHTML = '';
+    p.versos.forEach((l) => { const d = document.createElement('p'); d.className = l ? 'verso' : 'verso vacio'; d.textContent = l || ' '; v.appendChild(d); });
+    const ya = estado.poemas.some((q) => q.titulo === p.titulo && q.versos.join('\n') === p.versos.join('\n'));
+    $('#ws-guardar').textContent = ya ? 'guardado_ ✓' : 'guardar poema_ +';
+    $('#ws-guardar').disabled = ya;
+    $('#ws-poema').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  async function abrirTitulo(titulo) {
+    $('#ws-estado').textContent = 'abriendo poema_';
+    try { abrirPoema(await wsPoema(titulo)); $('#ws-estado').textContent = ''; }
+    catch { $('#ws-estado').textContent = 'no se pudo leer ese poema; prueba con otro.'; }
+  }
+  function mostrarResultados(titulos) {
+    const caja = $('#ws-resultados'); caja.innerHTML = '';
+    titulos.slice(0, 20).forEach((t) => {
+      const b = document.createElement('button'); b.className = 'resultado'; b.textContent = t.split('/').pop();
+      b.addEventListener('click', () => abrirTitulo(t));
+      caja.appendChild(b);
+    });
+  }
+  if (M.poesia && $('#ws-buscar')) {
+    const buscar = async () => {
+      const q = $('#ws-q').value.trim();
+      if (!q) { $('#ws-estado').textContent = 'escribe un poeta o una palabra, o prueba «al azar».'; return; }
+      $('#ws-estado').textContent = 'buscando_';
+      try {
+        const r = await wsBuscar(q);
+        mostrarResultados(r);
+        $('#ws-estado').textContent = r.length ? 'toca un poema para leerlo.' : 'sin resultados; prueba otra palabra.';
+      } catch { $('#ws-estado').textContent = 'la biblioteca no respondió; revisa tu conexión e intenta de nuevo.'; }
+    };
+    $('#ws-buscar').addEventListener('click', buscar);
+    $('#ws-q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
+    $('#ws-azar').addEventListener('click', async () => {
+      $('#ws-estado').textContent = 'sacando un poema al azar_';
+      $('#ws-resultados').innerHTML = '';
+      for (let intento = 0; intento < 4; intento++) {
+        try {
+          const r = await wsBuscar(`"${azar(POETAS)}"`);
+          if (!r.length) continue;
+          abrirPoema(await wsPoema(azar(r)));
+          $('#ws-estado').textContent = '¿otro? toca «al azar» de nuevo.';
+          return;
+        } catch {}
+      }
+      $('#ws-estado').textContent = 'la biblioteca no respondió; intenta de nuevo.';
+    });
+    $('#ws-guardar').addEventListener('click', () => {
+      if (!poemaAbierto) return;
+      estado.poemas.push({ id: uid(), titulo: poemaAbierto.titulo, versos: poemaAbierto.versos });
+      guardar(); pintarPoesia(); abrirPoema(poemaAbierto);
+    });
+    $('#propio-guardar').addEventListener('click', () => {
+      const txt = $('#propio-txt').value.trim();
+      if (!txt) return;
+      const versos = txt.split('\n').map((l) => l.trim());
+      estado.poemas.push({ id: uid(), titulo: `texto propio · ${versos.find(Boolean).slice(0, 24)}`, versos });
+      $('#propio-txt').value = ''; guardar(); pintarPoesia();
+    });
+  }
+
+  // paso 4: cada foto con su fragmento, en orden
+  function pintarListaPoe() {
+    const lista = $('#lista-poe'); if (!lista) return;
+    lista.innerHTML = '';
+    const fotos = ordenadas();
+    fotos.forEach((t, i) => {
+      const fila = document.createElement('div'); fila.className = 'poe-fila';
+      fila.innerHTML = `<div class="poe-cab"><span class="num">${i + 1}</span><img alt=""><span class="esp"></span>
+        <button class="herr chica" data-mover="-1" aria-label="subir">↑</button><button class="herr chica" data-mover="1" aria-label="bajar">↓</button></div>
+        <textarea maxlength="400" placeholder="fragmento_ escribe o elige versos" aria-label="fragmento de la foto ${i + 1}"></textarea>
+        <button class="herr chica elegir">elegir versos_</button><div class="selector" hidden></div>`;
+      fila.querySelector('img').src = t.src;
+      const ta = fila.querySelector('textarea');
+      ta.value = t.fragmento || '';
+      ta.addEventListener('input', () => { t.fragmento = ta.value; guardar(); });
+      fila.querySelectorAll('[data-mover]').forEach((b) => b.addEventListener('click', () => {
+        const orden = fotos.map((x) => x.id), j = i + Number(b.dataset.mover);
+        if (j < 0 || j >= orden.length) return;
+        [orden[i], orden[j]] = [orden[j], orden[i]];
+        estado.orden = orden; guardar(); pintarListaPoe(); pintar();
+      }));
+      const sel = fila.querySelector('.selector');
+      fila.querySelector('.elegir').addEventListener('click', () => {
+        if (!sel.hidden) { sel.hidden = true; return; }
+        if (!estado.poemas.length) { sel.hidden = false; sel.textContent = 'aún no guardas poemas; vuelve al paso 2.'; return; }
+        sel.hidden = false; sel.innerHTML = '';
+        const opciones = document.createElement('select');
+        estado.poemas.forEach((p, k) => { const o = document.createElement('option'); o.value = k; o.textContent = p.titulo; opciones.appendChild(o); });
+        const versos = document.createElement('div'); versos.className = 'versos';
+        const pintarVersos = () => {
+          versos.innerHTML = '';
+          estado.poemas[opciones.value].versos.forEach((l) => {
+            const d = document.createElement('p'); d.className = l ? 'verso' : 'verso vacio'; d.textContent = l || ' ';
+            if (l) d.addEventListener('click', () => d.classList.toggle('sel'));
+            versos.appendChild(d);
+          });
+        };
+        opciones.addEventListener('change', pintarVersos); pintarVersos();
+        const usar = document.createElement('button'); usar.className = 'boton chica'; usar.textContent = 'usar_';
+        usar.addEventListener('click', () => {
+          const elegidos = [...versos.querySelectorAll('.verso.sel')].map((d) => d.textContent);
+          if (!elegidos.length) return;
+          ta.value = elegidos.join('\n').slice(0, 400); t.fragmento = ta.value; guardar(); sel.hidden = true; ta.focus();
+        });
+        const ayuda = document.createElement('p'); ayuda.className = 'ayuda'; ayuda.textContent = 'toca los versos que quieras usar.';
+        sel.append(opciones, ayuda, versos, usar);
+      });
+      lista.appendChild(fila);
+    });
+  }
+
   function irA(paso) {
     estado.paso = paso;
     $$('.paso').forEach((s) => { s.hidden = Number(s.dataset.paso) !== paso; });
@@ -590,7 +806,8 @@
     cambiarModo('mover');
     marcarEstilo();
     if (paso >= 2 && paso <= 4) { fondoListo = null; pintarFondo(); }
-    if (paso === 4) pintarLista();
+    if (paso === 4) { pintarLista(); pintarListaPoe(); }
+    if (paso === M.pasoPoesia) pintarPoesia();
     if (paso === TOTAL) actualizarVista();
     guardar();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -631,6 +848,7 @@
     }));
   }
   async function componer(S = 2, conMapa = true) {
+    if (M.fragmentos) return componerSecuencia(S, conMapa);
     try { await document.fonts.load(`20px "Share Tech Mono"`); } catch {}
     await esperarImagenes();
     const W = 1400 * S, P = 72 * S, interior = W - P * 2;
@@ -758,6 +976,100 @@
     return c;
   }
 
+  // pin para la pieza final (con número si la máquina lo pide)
+  function dibujarPin(g, px, py, q, n) {
+    g.save(); g.translate(px - 7 * q, py - 17 * q); g.scale(q, q);
+    const forma = new Path2D('M7 17 C7 17 1 10 1 6.5 A6 6 0 0 1 13 6.5 C13 10 7 17 7 17Z');
+    g.fillStyle = '#141414'; g.fill(forma); g.lineWidth = 1.2; g.strokeStyle = '#fff'; g.stroke(forma);
+    if (n) { g.fillStyle = '#fff'; g.font = `6px ${FUENTE}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(n), 7, 6.8); }
+    else { g.beginPath(); g.arc(7, 6.5, 2, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill(); }
+    g.restore();
+  }
+
+  // pieza de poe_arqui_lecturas: mapa con pines numerados y la secuencia foto + fragmento
+  async function componerSecuencia(S = 2, conMapa = true) {
+    try { await document.fonts.load(`20px "Share Tech Mono"`); } catch {}
+    await esperarImagenes();
+    const W = 1400 * S, P = 72 * S, interior = W - P * 2;
+    const { W: bw, H: bh } = dims();
+    // el mapa se recorta a lo ancho si el tablero era vertical (celular), para que no domine la pieza
+    const BHtotal = Math.round(interior * (bh / bw));
+    const BH = Math.min(BHtotal, Math.round(interior * 0.62));
+    const recorte = (BHtotal - BH) / 2;
+    const v = Object.fromEntries(Object.entries(campos).map(([kk, el]) => [kk, el.value.trim()]));
+    const fecha = new Date().toISOString().slice(0, 10);
+    const fotos = ordenadas();
+    const colN = 46 * S, fotoW = Math.round(interior * 0.44), sep = 28 * S, textoW = interior - colN - fotoW - sep;
+
+    const medir = document.createElement('canvas').getContext('2d');
+    medir.font = `${40 * S}px ${FUENTE}`; const tit = envolver(medir, v.titulo || 'sin título', interior);
+    medir.font = `${26 * S}px ${FUENTE}`;
+    const items = fotos.map((t) => {
+      const lineas = envolver(medir, (t.fragmento || '').trim() || '—', textoW);
+      const fh = fotoW * t.ar;
+      return { t, lineas, h: Math.max(fh, lineas.length * 38 * S) };
+    });
+    let alto = P + 44 * S + 88 * S + tit.length * 50 * S + 32 * S + BH + 56 * S;
+    alto += items.reduce((a, it) => a + it.h + 40 * S, 0);
+    alto += 40 * S + 60 * S + 26 * S * 3 + P;
+
+    const c = document.createElement('canvas'); c.width = W; c.height = Math.ceil(alto);
+    const g = c.getContext('2d');
+    g.fillStyle = '#f3f2ef'; g.fillRect(0, 0, W, c.height); g.textBaseline = 'top';
+    let y = P;
+    g.font = `${22 * S}px ${FUENTE}`; g.fillStyle = '#6f6f6c'; g.fillText('máquinas_', P, y); y += 44 * S;
+    g.font = `${44 * S}px ${FUENTE}`; g.fillStyle = '#141414'; g.fillText(M.titulo, P, y); y += 88 * S;
+    g.font = `${40 * S}px ${FUENTE}`;
+    for (const l of tit) { g.fillText(l, P, y); y += 50 * S; }
+    y += 32 * S;
+
+    // mapa con pines numerados
+    const ox = P, oy = y;
+    g.fillStyle = '#ffffff'; g.fillRect(ox, oy, interior, BH);
+    if (conMapa && estado.zona) {
+      const mc = await dibujarMapa(estado.zona, interior, BHtotal);
+      g.save(); g.globalAlpha = OPACIDAD_MAPA; g.drawImage(mc, 0, recorte, interior, BH, ox, oy, interior, BH); g.restore();
+    }
+    g.save(); g.beginPath(); g.rect(ox, oy, interior, BH); g.clip();
+    const q = 3.6 * S;
+    fotos.forEach((t, i) => {
+      if (!t.pin) return;
+      const py = Math.min(Math.max(t.pin.y * BHtotal - recorte, 18 * q), BH - 2 * S);
+      dibujarPin(g, ox + t.pin.x * interior, oy + py, q, i + 1);
+    });
+    g.restore();
+    g.lineWidth = 1.5 * S; g.strokeStyle = '#141414'; g.strokeRect(ox + 0.5, oy + 0.5, interior - 1, BH - 1);
+    if (conMapa && estado.zona) {
+      g.font = `${11 * S}px sans-serif`; g.fillStyle = '#8a8984'; g.textAlign = 'right';
+      g.fillText(ATRIB, ox + interior - 8 * S, oy + BH - 18 * S); g.textAlign = 'left';
+    }
+    y = oy + BH + 56 * S;
+
+    // secuencia
+    items.forEach((it, i) => {
+      const im = imgs.get(it.t.id), fh = fotoW * it.t.ar;
+      g.beginPath(); g.arc(P + 15 * S, y + 15 * S, 15 * S, 0, Math.PI * 2); g.fillStyle = '#141414'; g.fill();
+      g.fillStyle = '#fff'; g.font = `${16 * S}px ${FUENTE}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(String(i + 1), P + 15 * S, y + 16 * S); g.textAlign = 'left'; g.textBaseline = 'top';
+      const fx = P + colN;
+      if (im && im.naturalWidth) g.drawImage(im, fx, y, fotoW, fh);
+      g.lineWidth = 1.5 * S; g.strokeStyle = '#141414'; g.strokeRect(fx, y, fotoW, fh);
+      g.fillStyle = '#141414'; g.font = `${26 * S}px ${FUENTE}`;
+      let ty = y;
+      for (const l of it.lineas) { g.fillText(l, fx + fotoW + sep, ty); ty += 38 * S; }
+      y += it.h + 40 * S;
+    });
+
+    y += 0;
+    g.fillStyle = '#141414'; g.fillRect(P, y, interior, 1.5 * S); y += 40 * S;
+    g.font = `${20 * S}px ${FUENTE}`;
+    g.fillText([v.alias || 'anónimo', v.ciudad, fecha].filter(Boolean).join(' · '), P, y); y += 26 * S;
+    g.fillStyle = '#6f6f6c';
+    g.fillText(`${LICENCIA} · máquinas_ · ${M.credito}`, P, y); y += 26 * S;
+    if (estado.zona) g.fillText(`mapa ${ATRIB}`, P, y);
+    return c;
+  }
+
   // si el mapa no permite exportarse, se compone sin él
   async function componerSeguro(S, tipo, calidad) {
     try { return (await componer(S, true)).toDataURL(tipo, calidad); }
@@ -807,6 +1119,7 @@
     avisoFinal('1/2 · preparando tu pieza_ no cierres esta página.');
     try {
       const v = Object.fromEntries(Object.entries(campos).map(([kk, el]) => [kk, el.value.trim()]));
+      if (M.fragmentos) v.narrativa = textoNarrativa();
       const cuerpo = {
         maquina: M.id, ...v, ubicacion: ubicacionTexto(), licencia: LICENCIA, consentimiento: true,
         website: e.target.website.value, turnstile: token,
@@ -819,6 +1132,7 @@
             ...(pin ? { pin: { x: +pin.x.toFixed(4), y: +pin.y.toFixed(4) } } : {}),
           })),
           puntos: estado.puntos.map(({ id, x, y }) => ({ id, x: +x.toFixed(4), y: +y.toFixed(4) })),
+          ...(M.fragmentos ? { orden: ordenadas().map((t) => t.id), fragmentos: ordenadas().map((t) => t.fragmento || '') } : {}),
           lineas: estado.lineas,
         },
       };

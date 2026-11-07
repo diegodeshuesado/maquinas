@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="version" content="__VERSION__">
+<script>
+/* si hay una versión más nueva publicada, recarga una vez para no quedarse con la copia vieja del navegador */
+(function () {
+  function revisar() {
+  var v = document.querySelector('meta[name=version]').content;
+  if (v.indexOf('__') === 0 || !window.fetch) return;
+  fetch('version.txt?' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.text() : ''; })
+    .then(function (t) {
+      t = t.trim();
+      try { if (!t || t === v || sessionStorage.getItem('maquinas_recarga') === t) return; sessionStorage.setItem('maquinas_recarga', t); } catch (e) { return; }
+      var u = new URL(location.href); u.searchParams.set('v', t); location.replace(u.toString());
+    })
+    .catch(function () {});
+  }
+  revisar();
+  /* al regresar con «atrás», Safari muestra la página guardada sin volver a revisar */
+  window.addEventListener('pageshow', function (e) { if (e.persisted) revisar(); });
+})();
+</script>
+
+<title>poe_arqui_lecturas · máquinas_</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+</head>
+<body data-maquina="poe_arqui_lecturas">
+<div class="envoltura asistente">
+  <header class="cab">
+    <a class="marca-chica" href="./">máquinas_</a>
+    <a class="maq" href="poe_arqui_lecturas.html">poe_arqui_lecturas</a>
+  </header>
+  <div class="fila-progreso">
+    <button class="enlace" id="reiniciar" hidden>empezar de nuevo_</button>
+    <p class="progreso" id="progreso" aria-live="polite">■□□□□ 1/5</p>
+  </div>
+
+  <!-- 1 · zona -->
+  <section class="paso" data-paso="1">
+    <h1 class="paso-t">delimitar la zona_</h1>
+    <p class="paso-d">mueve y acerca el mapa hasta encuadrar la zona a poe_arqui_lecturar.</p>
+    <div class="marco mapa-marco">
+      <div id="mapa" aria-label="mapa para delimitar la zona"></div>
+      <div class="fijado" id="fijado" hidden></div>
+    </div>
+    <div class="herramientas abajo">
+      <button class="herr" id="mi-ubicacion">◎ usar mi ubicación</button>
+      <button class="herr" id="fijar">fijar zona</button>
+    </div>
+    <p class="ayuda" id="estado-zona"></p>
+  </section>
+
+  <!-- 2 · poesía -->
+  <section class="paso" data-paso="2" hidden>
+    <h1 class="paso-t">conseguir la poesía_</h1>
+    <p class="paso-d">busca poemas por poeta o palabra, o deja que el azar elija. guarda los que quieras usar.</p>
+    <div class="buscador">
+      <input id="ws-q" type="search" placeholder="poeta o palabra" aria-label="buscar poesía" enterkeyhint="search">
+      <button class="herr on" id="ws-buscar">buscar_</button>
+      <button class="herr" id="ws-azar">al azar_</button>
+    </div>
+    <p class="ayuda" id="ws-estado" aria-live="polite"></p>
+    <div class="resultados" id="ws-resultados"></div>
+    <div class="poema" id="ws-poema" hidden>
+      <p class="poema-t" id="ws-poema-t"></p>
+      <div class="versos" id="ws-versos"></div>
+      <button class="boton" id="ws-guardar">guardar poema_ +</button>
+    </div>
+    <p class="etiqueta-poesia">tu poesía:/&lt; <span id="n-poemas">0 poemas</span></p>
+    <div class="mis-poemas" id="mis-poemas"></div>
+    <details class="propio">
+      <summary>+ pegar un texto propio</summary>
+      <textarea id="propio-txt" maxlength="3000" placeholder="pega o escribe aquí los versos"></textarea>
+      <button class="herr" id="propio-guardar">guardar texto_</button>
+    </details>
+  </section>
+
+  <!-- 3 · fotos -->
+  <section class="paso" data-paso="3" hidden>
+    <h1 class="paso-t">recorrer y fotografiar_</h1>
+    <p class="paso-d">camina por la zona y fotografía tres o más fachadas, estructuras, pasillos, escaleras o calles. luego arrastra cada pin a donde tomaste la foto.</p>
+    <div class="herramientas">
+      <label class="herr" for="camara">◉ cámara</label>
+      <input id="camara" class="entrada-foto" type="file" accept="image/*" capture="environment" hidden>
+      <label class="herr" for="galeria">+ galería</label>
+      <input id="galeria" class="entrada-foto" type="file" accept="image/*" multiple hidden>
+      <button class="herr" data-modo="mover">mover</button>
+      <button class="herr" data-modo="borrar">borrar</button>
+    </div>
+    <p class="ayuda" data-ayuda></p>
+    <div data-slot></div>
+    <p class="conteo-luces" id="conteo-luces" aria-live="polite"></p>
+  </section>
+
+  <!-- 4 · renombrar -->
+  <section class="paso" data-paso="4" hidden>
+    <h1 class="paso-t">renombrar con poesía_</h1>
+    <p class="paso-d">pon al pie de cada foto un fragmento de tu poesía. ordénalas como una narración.</p>
+    <div class="campos">
+      <div class="campo">
+        <label for="f-titulo">título:/&lt;</label>
+        <input id="f-titulo" maxlength="80" placeholder="título de tu narración">
+      </div>
+    </div>
+    <div class="lista-poe" id="lista-poe"></div>
+    <p class="ayuda" style="margin-top:28px">tu mapa</p>
+    <div data-slot></div>
+  </section>
+
+  <!-- 5 · revisar y enviar -->
+  <section class="paso" data-paso="5" hidden>
+    <h1 class="paso-t">revisar y enviar_</h1>
+    <p class="paso-d">así se verá tu pieza.</p>
+    <div class="fila">
+      <div class="campo">
+        <label for="f-alias">nombre/alias:/&lt;</label>
+        <input id="f-alias" maxlength="60" placeholder="opcional">
+      </div>
+      <div class="campo">
+        <label for="f-ciudad">ciudad:/&lt;</label>
+        <input id="f-ciudad" maxlength="60" placeholder="opcional">
+      </div>
+    </div>
+    <figure class="vista">
+      <img id="vista" alt="vista previa de tu pieza">
+      <figcaption class="ayuda" id="vista-estado">componiendo pieza_</figcaption>
+    </figure>
+    <form id="formulario" autocomplete="off">
+      <div class="trampa" aria-hidden="true"><label>no llenar <input name="website" tabindex="-1" autocomplete="off"></label></div>
+      <label class="consent">
+        <input type="checkbox" id="f-consent">
+        <span>acepto publicar mi pieza en máquinas_ bajo la licencia
+        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
+        (crédito, sin uso comercial, compartir igual).</span>
+      </label>
+      <div id="turnstile"></div>
+      <div class="acciones">
+        <button type="button" class="herr" id="exportar">descargar png_</button>
+        <button type="submit" class="boton" id="enviar">enviar pieza_ →</button>
+      </div>
+      <p class="mensaje" id="mensaje" aria-live="polite"></p>
+    </form>
+    <div class="exito" id="exito" hidden>
+      <p class="paso-t" style="margin-top:8px">envío recibido_</p>
+      <p class="paso-d">gracias. tu narración aparecerá en la galería cuando sea aprobada.</p>
+      <div class="acciones">
+        <button class="boton" id="nueva">nueva narración_ →</button>
+        <a class="herr" href="galeria.html" style="text-decoration:none">ver galería_</a>
+      </div>
+    </div>
+  </section>
+
+  <p class="mensaje error" id="aviso" aria-live="assertive"></p>
+  <nav class="pasos-nav">
+    <button class="herr" id="anterior">← anterior</button>
+    <button class="boton" id="siguiente">siguiente →</button>
+  </nav>
+</div>
+
+<!-- el tablero se mueve entre los pasos 2, 3 y 4 -->
+<div id="guardado" hidden>
+<div class="tablero marco modo-mover" id="tablero">
+  <canvas class="fondo-mapa" id="fondo"></canvas>
+  <svg class="lineas" id="lineas" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div class="vacio" id="vacio">toma una foto con «◉ cámara»<br>o súbela desde «+ galería»_</div>
+  <span class="atrib">© OpenStreetMap © CARTO</span>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="config.js?v=__VERSION__"></script>
+<script src="assets/js/tablero.js?v=__VERSION__"></script>
+</body>
+</html>

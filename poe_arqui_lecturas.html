@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="version" content="__VERSION__">
+<script>
+/* si hay una versión más nueva publicada, recarga una vez para no quedarse con la copia vieja del navegador */
+(function () {
+  function revisar() {
+  var v = document.querySelector('meta[name=version]').content;
+  if (v.indexOf('__') === 0 || !window.fetch) return;
+  fetch('version.txt?' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.text() : ''; })
+    .then(function (t) {
+      t = t.trim();
+      try { if (!t || t === v || sessionStorage.getItem('maquinas_recarga') === t) return; sessionStorage.setItem('maquinas_recarga', t); } catch (e) { return; }
+      var u = new URL(location.href); u.searchParams.set('v', t); location.replace(u.toString());
+    })
+    .catch(function () {});
+  }
+  revisar();
+  /* al regresar con «atrás», Safari muestra la página guardada sin volver a revisar */
+  window.addEventListener('pageshow', function (e) { if (e.persisted) revisar(); });
+})();
+</script>
+
+<title>poe_arqui_lecturas · máquinas_</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+</head>
+<body>
+<div class="envoltura">
+  <header class="cabeza">
+    <a class="marca" href="./">máquinas_</a>
+    <nav>
+      <a href="./">inicio</a>
+      <a href="galeria.html">galería</a>
+    </nav>
+  </header>
+
+  <article class="hoja">
+    <h3>Máquina_<wbr>poe_<wbr>arqui_<wbr>lecturas.</h3>
+    <p class="credito">Diego Deshuesado</p>
+
+    <p><strong>Operación:/&lt;</strong> Renombrar espacios de un entorno mediante poesía.</p>
+
+    <p><strong>Materiales:</strong> celular con cámara y poesía a la mano.</p>
+
+    <p class="etiqueta">Materialización:</p>
+    <ol>
+      <li>Delimitar en el mapa la zona a poe_arqui_lecturar.</li>
+      <li>Conseguir poesía, al gusto o al azar, en el buscador de la máquina o en libros a la mano; la biblioteca más cercana también es un buen lugar para empezar.</li>
+      <li>Caminar por la zona, fotografiar fachadas, estructuras, pasillos, escaleras, calles y estructuras arquitectónicas, y marcar en el mapa dónde se tomó cada foto.</li>
+      <li>Seleccionar fragmentos de diversos poemas y ponerlos al pie de cada fotografía.</li>
+      <li>Ordenar el material como una narración foto-poética y enviarla.</li>
+    </ol>
+
+    <p><strong>Entrega:/&lt;</strong> la pieza se arma y se envía en el tablero.</p>
+  </article>
+
+  <p style="margin-top:32px"><a class="boton" href="tablero_poe.html">comenzar_ →</a></p>
+
+  <footer class="pie-sitio">máquinas_ · Diego Deshuesado</footer>
+</div>
+</body>
+</html>

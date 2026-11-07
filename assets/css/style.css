@@ -272,3 +272,39 @@ h2 { font-weight: 400; font-size: 22px; margin: 48px 0 16px; }
 .foto-fila { display: flex; gap: 10px; align-items: center; }
 .foto-fila img { width: 56px; height: 44px; object-fit: cover; border: 1px solid var(--linea); flex: none; }
 .foto-fila input { flex: 1; font: inherit; font-size: 14px; border: 1px solid var(--linea); border-radius: 0; background: var(--papel); padding: 8px 10px; color: var(--tinta); min-width: 0; }
+
+/* poe_arqui_lecturas */
+.ced-num { display: block; background: var(--cedula); color: var(--cedula-txt); font-size: 12px; line-height: 14px; height: 22px; padding: 4px 6px; }
+.pin { text-align: center; }
+.pin-n { position: absolute; left: 0; right: 0; top: 5px; color: #fff; font-size: 11px; line-height: 1; pointer-events: none; }
+.buscador { display: flex; gap: 8px; flex-wrap: wrap; }
+.buscador input { flex: 1 1 160px; min-width: 0; font: inherit; font-size: 15px; border: 1px solid var(--linea); border-radius: 0; background: var(--papel); padding: 8px 10px; color: var(--tinta); }
+.resultados { display: grid; border-top: 1px solid var(--linea); margin-top: 6px; }
+.resultados:empty { display: none; }
+.resultado { font: inherit; font-size: 14px; text-align: left; background: none; border: 0; border-bottom: 1px solid #d6d5d0; padding: 10px 2px; cursor: pointer; color: var(--tinta); }
+.resultado:hover { background: var(--papel); }
+.poema { background: var(--papel); border: 1px solid var(--linea); padding: 16px; margin: 16px 0; }
+.poema-t { font-size: 17px; margin: 0 0 10px; }
+.versos { max-height: 340px; overflow: auto; margin-bottom: 12px; }
+.verso { margin: 0; padding: 3px 6px; font-size: 14px; line-height: 1.5; }
+.verso.vacio { height: 10px; padding: 0; }
+.selector .verso { cursor: pointer; }
+.selector .verso.sel { background: var(--tinta); color: var(--muro); }
+.etiqueta-poesia { font-size: 15px; margin: 28px 0 6px; }
+.mis-poemas { border-top: 1px solid var(--linea); }
+.mi-poema { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d6d5d0; padding: 8px 2px; font-size: 14px; }
+.mi-poema .quitar { font: inherit; background: none; border: 0; font-size: 18px; color: var(--gris); cursor: pointer; padding: 0 6px; }
+.propio { margin-top: 14px; }
+.propio summary { display: inline-block; font-size: 14px; border: 1px solid var(--tinta); padding: 7px 12px; cursor: pointer; list-style: none; }
+.propio summary::-webkit-details-marker { display: none; }
+.propio textarea { display: block; width: 100%; min-height: 120px; margin: 10px 0; font: inherit; font-size: 14px; border: 1px solid var(--linea); border-radius: 0; background: var(--papel); padding: 10px; }
+.lista-poe { display: grid; gap: 14px; margin-top: 22px; }
+.poe-fila { background: var(--papel); border: 1px solid var(--linea); padding: 12px; }
+.poe-cab { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.poe-cab img { width: 64px; height: 48px; object-fit: cover; border: 1px solid var(--linea); }
+.poe-cab .esp { flex: 1; }
+.num { display: inline-flex; width: 24px; height: 24px; border-radius: 50%; background: var(--tinta); color: #fff; font-size: 12px; align-items: center; justify-content: center; flex: none; }
+.poe-fila textarea { display: block; width: 100%; min-height: 76px; font: inherit; font-size: 14px; line-height: 1.5; border: 1px solid var(--linea); border-radius: 0; background: #fff; padding: 8px 10px; margin-bottom: 8px; }
+.selector { margin-top: 10px; border-top: 1px dashed var(--linea); padding-top: 10px; }
+.selector select { font: inherit; font-size: 14px; border: 1px solid var(--linea); border-radius: 0; background: #fff; padding: 6px 8px; max-width: 100%; }
+.boton.chica { font-size: 13px; padding: 6px 12px; }
