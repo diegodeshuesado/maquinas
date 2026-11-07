@@ -6,9 +6,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '17 15 * * 1'   # cada lunes: revisa si el SESNSP publicó cifras nuevas (un_pueblo_feliz)
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -34,6 +36,16 @@ jobs:
         run: |
           pip install --quiet pillow
           python scripts/miniaturas.py
+      - name: cifras de un_pueblo_feliz (SESNSP + datos/cifras_manual.json)
+        run: |
+          python scripts/cifras.py || echo "no se pudieron actualizar las cifras; se publica la versión guardada"
+          if ! git diff --quiet -- datos/cifras.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add datos/cifras.json
+            git commit -m "cifras: actualización automática"
+            git pull --rebase --quiet origin main && git push --quiet origin HEAD:main || echo "no se pudo guardar el commit de cifras (se publica igual)"
+          fi
       - name: índice de la galería
         run: node scripts/indice.mjs
       - name: sello de versión (evita que los navegadores se queden con copias viejas)

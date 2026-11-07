@@ -1,0 +1,178 @@
+{
+  "actualizado": "2026-11-07",
+  "estado": "SESNSP actualizado: septiembre de 2026",
+  "cifras": [
+    {
+      "fuente": "SESNSP",
+      "tipo": "oficial",
+      "periodo": "septiembre de 2026",
+      "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva",
+      "id": "hom-mes",
+      "numero": "1,265",
+      "texto": "víctimas de homicidio doloso en septiembre de 2026",
+      "auto": true
+    },
+    {
+      "fuente": "SESNSP",
+      "tipo": "oficial",
+      "periodo": "septiembre de 2026",
+      "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva",
+      "id": "hom-dia",
+      "numero": "42",
+      "texto": "personas asesinadas al día, en promedio, en septiembre de 2026",
+      "auto": true
+    },
+    {
+      "fuente": "SESNSP",
+      "tipo": "oficial",
+      "periodo": "septiembre de 2026",
+      "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva",
+      "id": "hom-acum",
+      "numero": "12,854",
+      "texto": "víctimas de homicidio doloso de enero a septiembre de 2026",
+      "auto": true
+    },
+    {
+      "fuente": "SESNSP",
+      "tipo": "oficial",
+      "periodo": "septiembre de 2026",
+      "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva",
+      "id": "fem-mes",
+      "numero": "72",
+      "texto": "víctimas de feminicidio en septiembre de 2026",
+      "auto": true
+    },
+    {
+      "fuente": "SESNSP",
+      "tipo": "oficial",
+      "periodo": "septiembre de 2026",
+      "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva",
+      "id": "fem-acum",
+      "numero": "520",
+      "texto": "víctimas de feminicidio de enero a septiembre de 2026",
+      "auto": true
+    },
+    {
+      "fuente": "SESNSP",
+      "tipo": "oficial",
+      "periodo": "septiembre de 2026",
+      "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva",
+      "id": "ext-acum",
+      "numero": "8,551",
+      "texto": "víctimas de extorsión de enero a septiembre de 2026",
+      "auto": true
+    },
+    {
+      "fuente": "SESNSP",
+      "tipo": "oficial",
+      "periodo": "septiembre de 2026",
+      "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva",
+      "id": "sec-acum",
+      "numero": "427",
+      "texto": "víctimas de secuestro de enero a septiembre de 2026",
+      "auto": true
+    },
+    {
+      "fuente": "SESNSP",
+      "tipo": "oficial",
+      "periodo": "septiembre de 2026",
+      "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva",
+      "id": "trata-acum",
+      "numero": "697",
+      "texto": "víctimas de trata de personas de enero a septiembre de 2026",
+      "auto": true
+    },
+    {
+      "fuente": "SESNSP",
+      "tipo": "oficial",
+      "periodo": "septiembre de 2026",
+      "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva",
+      "id": "nna-acum",
+      "numero": "415",
+      "texto": "niñas, niños y adolescentes víctimas de homicidio doloso de enero a septiembre de 2026",
+      "auto": true
+    },
+    {
+      "fuente": "SESNSP",
+      "tipo": "oficial",
+      "periodo": "septiembre de 2026",
+      "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva",
+      "id": "vf-acum",
+      "numero": "228,648",
+      "texto": "víctimas de violencia familiar de enero a septiembre de 2026",
+      "auto": true
+    },
+    {
+      "id": "desaparecidas-total",
+      "numero": "más de 132 mil",
+      "texto": "personas desaparecidas y no localizadas en México",
+      "fuente": "Registro Nacional de Personas Desaparecidas (reconocido por el Gobierno de México)",
+      "tipo": "oficial",
+      "periodo": "marzo de 2026",
+      "url": "https://www.unotv.com/nacional/gobierno-actualiza-cifra-de-desaparecidos-mas-de-132-mil-siguen-sin-localizarse/"
+    },
+    {
+      "id": "cifra-negra",
+      "numero": "93.4%",
+      "texto": "de los delitos de 2025 no se denunció o no se investigó (cifra negra)",
+      "fuente": "INEGI, ENVIPE 2026",
+      "tipo": "oficial",
+      "periodo": "2025",
+      "url": "https://www.inegi.org.mx/contenidos/saladeprensa/boletines/2026/envipe/ENVIPE2026_CP.pdf"
+    },
+    {
+      "id": "victimas-2025",
+      "numero": "23 millones",
+      "texto": "de personas adultas fueron víctimas de algún delito en 2025",
+      "fuente": "INEGI, ENVIPE 2026",
+      "tipo": "oficial",
+      "periodo": "2025",
+      "url": "https://www.inegi.org.mx/contenidos/saladeprensa/boletines/2026/envipe/ENVIPE2026_CP.pdf"
+    },
+    {
+      "id": "percepcion",
+      "numero": "74%",
+      "texto": "de la población adulta se siente insegura en su estado",
+      "fuente": "INEGI, ENVIPE 2026",
+      "tipo": "oficial",
+      "periodo": "febrero-abril de 2026",
+      "url": "https://www.inegi.org.mx/contenidos/saladeprensa/boletines/2026/envipe/ENVIPE2026_CP.pdf"
+    },
+    {
+      "id": "atrocidades-1s",
+      "numero": "2,529",
+      "texto": "atrocidades registradas en medios de enero a junio de 2026",
+      "fuente": "Causa en Común",
+      "tipo": "sociedad civil",
+      "periodo": "enero-junio de 2026",
+      "url": "https://mundoejecutivocdmx.com/?p=33558"
+    },
+    {
+      "id": "tortura-1s",
+      "numero": "658",
+      "texto": "asesinatos con tortura registrados en medios de enero a junio de 2026",
+      "fuente": "Causa en Común",
+      "tipo": "sociedad civil",
+      "periodo": "enero-junio de 2026",
+      "url": "https://mundoejecutivocdmx.com/?p=33558"
+    },
+    {
+      "id": "fosas-1s",
+      "numero": "193",
+      "texto": "fosas clandestinas localizadas de enero a junio de 2026",
+      "fuente": "Causa en Común",
+      "tipo": "sociedad civil",
+      "periodo": "enero-junio de 2026",
+      "url": "https://mundoejecutivocdmx.com/?p=33558"
+    },
+    {
+      "id": "desaparecidas-21m",
+      "numero": "19,923",
+      "texto": "personas desaparecidas en los primeros 21 meses del gobierno actual",
+      "fuente": "Observatorio Nacional Ciudadano, con datos del RNPDNO",
+      "tipo": "sociedad civil",
+      "periodo": "octubre de 2024 a junio de 2026",
+      "url": "https://onc.org.mx/public/onc_site/uploads/reportes/ONC_Comunicado_1S2026_2pag.pdf"
+    }
+  ]
+}

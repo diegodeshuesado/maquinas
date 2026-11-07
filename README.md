@@ -16,6 +16,10 @@ anar_quitecturas.html       instructivo
 tablero_anar.html           anar_quitecturas: imagen (cámara, galería o imágenes libres de Wikimedia Commons) → intervenir (trazo, texto, stickers) → nombrar → ubicar (opcional) → enviar
 no_poesia.html              instructivo
 tablero_nopoesia.html       no_poesia: poema (Wikisource o propio) → escribir sin letras (verso por verso, hoja libre o foto en papel) → nombrar → enviar
+un_pueblo_feliz.html        instructivo
+tablero_pueblo.html         un_pueblo_feliz: cifra real (al azar o de la lista) → selfie con la cifra como filtro → enviar
+datos/cifras.json           cifras de un_pueblo_feliz; se regenera solo cada lunes (scripts/cifras.py descarga víctimas del SESNSP)
+datos/cifras_manual.json    cifras que no tienen archivo descargable (INEGI, desaparecidas, organizaciones civiles): edítalo a mano
 galeria.html                piezas aprobadas (anar_quitecturas también en mapa)
 config.js                   ← aquí pegas la URL del Worker y la clave de Turnstile
 assets/                     estilos, script del tablero, fotos de la expo

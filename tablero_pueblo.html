@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="version" content="__VERSION__">
+<script>
+/* si hay una versión más nueva publicada, recarga una vez para no quedarse con la copia vieja del navegador */
+(function () {
+  function revisar() {
+  var v = document.querySelector('meta[name=version]').content;
+  if (v.indexOf('__') === 0 || !window.fetch) return;
+  fetch('version.txt?' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.text() : ''; })
+    .then(function (t) {
+      t = t.trim();
+      try { if (!t || t === v || sessionStorage.getItem('maquinas_recarga') === t) return; sessionStorage.setItem('maquinas_recarga', t); } catch (e) { return; }
+      var u = new URL(location.href); u.searchParams.set('v', t); location.replace(u.toString());
+    })
+    .catch(function () {});
+  }
+  revisar();
+  /* al regresar con «atrás», Safari muestra la página guardada sin volver a revisar */
+  window.addEventListener('pageshow', function (e) { if (e.persisted) revisar(); });
+})();
+</script>
+
+<title>un_pueblo_feliz · máquinas_</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+</head>
+<body data-maquina="un_pueblo_feliz">
+<div class="envoltura asistente">
+  <header class="cab">
+    <a class="marca-chica" href="./">máquinas_</a>
+    <a class="maq" href="un_pueblo_feliz.html">un_pueblo_feliz</a>
+  </header>
+  <div class="fila-progreso">
+    <button class="enlace" id="reiniciar" hidden>empezar de nuevo_</button>
+    <p class="progreso" id="progreso" aria-live="polite">■□□ 1/3</p>
+  </div>
+
+  <!-- 1 · la cifra -->
+  <section class="paso" data-paso="1">
+    <h1 class="paso-t">la cifra_</h1>
+    <p class="paso-d">una cifra real de violencia en México. quédate con esta, pide otra al azar o elige una de la lista.</p>
+    <canvas class="estiquer-vista" id="estiquer-vista" aria-label="tu cifra"></canvas>
+    <p class="ayuda" id="cifra-fuente" style="margin-top:8px"></p>
+    <div class="herramientas">
+      <button class="herr" type="button" id="cifra-azar">otra al azar_ ↻</button>
+    </div>
+    <details class="propio">
+      <summary>elegir de la lista_</summary>
+      <div class="cifra-lista" id="cifra-lista"></div>
+    </details>
+  </section>
+
+  <!-- 2 · la selfie -->
+  <section class="paso" data-paso="2" hidden>
+    <h1 class="paso-t">la selfie_</h1>
+    <p class="paso-d">sonríe_</p>
+    <div class="marco-selfie">
+      <video id="video" playsinline muted autoplay hidden></video>
+      <img id="foto" alt="tu selfie" hidden>
+      <div class="selfie-vacia" id="selfie-vacia" hidden>abre la cámara o sube una foto_</div>
+      <canvas id="filtro" aria-hidden="true"></canvas>
+    </div>
+    <div class="herramientas abajo">
+      <button class="boton" type="button" id="tomar" hidden>◉ tomar_</button>
+      <button class="herr" type="button" id="otra" hidden>otra_ ↻</button>
+      <button class="herr" type="button" id="abrir" hidden>◉ abrir cámara_</button>
+      <label class="herr" for="subir">+ subir foto</label>
+      <input id="subir" type="file" accept="image/*" capture="user" hidden>
+    </div>
+    <p class="ayuda" id="camara-estado" aria-live="polite"></p>
+  </section>
+
+  <!-- 3 · revisar y enviar -->
+  <section class="paso" data-paso="3" hidden>
+    <h1 class="paso-t">revisar y enviar_</h1>
+    <p class="paso-d">así se verá tu pieza.</p>
+    <figure class="vista">
+      <img id="vista" alt="vista previa de tu pieza">
+      <figcaption class="ayuda" id="vista-estado">componiendo pieza_</figcaption>
+    </figure>
+    <form id="formulario" autocomplete="off">
+      <div class="trampa" aria-hidden="true"><label>no llenar <input name="website" tabindex="-1" autocomplete="off"></label></div>
+      <label class="consent">
+        <input type="checkbox" id="f-consent">
+        <span>acepto publicar mi selfie, con mi rostro visible, en máquinas_ bajo la licencia
+        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
+        (crédito, sin uso comercial, compartir igual).</span>
+      </label>
+      <div id="turnstile"></div>
+      <div class="acciones">
+        <button type="button" class="herr" id="exportar">descargar png_</button>
+        <button type="submit" class="boton" id="enviar">enviar pieza_ →</button>
+      </div>
+      <p class="mensaje" id="mensaje" aria-live="polite"></p>
+    </form>
+    <div class="exito" id="exito" hidden>
+      <p class="paso-t" style="margin-top:8px">envío recibido_</p>
+      <p class="paso-d">gracias. tu selfie aparecerá en la galería cuando sea aprobada.</p>
+      <div class="acciones">
+        <button class="boton" id="nueva">nueva selfie_ →</button>
+        <a class="herr" href="galeria.html?maquina=un_pueblo_feliz" style="text-decoration:none">ver galería_</a>
+      </div>
+    </div>
+  </section>
+
+  <p class="mensaje error" id="aviso" aria-live="assertive"></p>
+  <nav class="pasos-nav">
+    <button class="herr" id="anterior">← anterior</button>
+    <button class="boton" id="siguiente">siguiente →</button>
+  </nav>
+</div>
+
+<script src="config.js?v=__VERSION__"></script>
+<script src="assets/js/pueblo.js?v=__VERSION__"></script>
+</body>
+</html>

@@ -371,3 +371,18 @@ h2 { font-weight: 400; font-size: 22px; margin: 48px 0 16px; }
 .pagina-mini img { width: min(320px, 100%); border: 1px solid var(--linea); }
 .papel-vista { max-height: 420px; width: auto; max-width: 100%; border: 1px solid var(--linea); margin-top: 12px; }
 .nota-asemica { font-size: 13px; color: var(--gris); margin-top: 22px; }
+
+/* un_pueblo_feliz */
+.estiquer-vista { display: block; width: 100%; }
+.cifra-lista { display: grid; gap: 8px; margin-top: 10px; }
+.cifra-op { display: grid; gap: 2px; text-align: left; font: inherit; color: var(--tinta); background: var(--papel); border: 1px solid var(--linea); padding: 10px 12px; cursor: pointer; }
+.cifra-op strong { font-weight: 400; font-size: 20px; }
+.cifra-op span { font-size: 14px; }
+.cifra-op em { font-style: normal; font-size: 12px; color: var(--gris); }
+.cifra-op.on { background: var(--tinta); color: var(--muro); }
+.cifra-op.on em { color: #9a9a96; }
+.marco-selfie { position: relative; width: 100%; max-width: 480px; aspect-ratio: 4 / 5; border: 1px solid var(--linea); background: #e7e6e2; overflow: hidden; }
+.marco-selfie video, .marco-selfie img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.marco-selfie video { transform: scaleX(-1); }
+.marco-selfie canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.selfie-vacia { position: absolute; left: 0; right: 0; top: 30%; text-align: center; font-size: 14px; color: var(--gris); }
