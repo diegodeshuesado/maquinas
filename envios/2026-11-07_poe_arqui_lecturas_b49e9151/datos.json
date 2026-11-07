@@ -1,0 +1,77 @@
+{
+  "id": "2026-11-07_poe_arqui_lecturas_b49e9151",
+  "maquina": "poe_arqui_lecturas",
+  "titulo": "sadbado",
+  "narrativa": "1. Hoja solitaria y mustia,\npor el viento arrebatada\nde la encina que adornaba\nlos restos mirando estás.\n\n2. Vamos por partes:\n¡comenzará muy puro,\npero al fin...¡carne!\n\n3. Melancólica y dulce cual la huella\ncuando baña a lo lejos los espacios\nde la penumbra el misterioso tul.\nen un suspiro involuntario da,",
+  "ubicacion": "20.551, -100.440",
+  "alias": "Anan",
+  "ciudad": "",
+  "fecha": "2026-11-07",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "aspecto": null,
+    "zona": {
+      "lat": 20.551,
+      "lng": -100.44,
+      "zoom": 18
+    },
+    "estilo": {
+      "trazo": "continua",
+      "color": "#141414",
+      "grosor": "medio"
+    },
+    "tarjetas": [
+      {
+        "id": "e1xpag6",
+        "x": 0.0807,
+        "y": 0.1867,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": null,
+        "pin": {
+          "x": 0.24,
+          "y": 0.4588
+        }
+      },
+      {
+        "id": "o9zvuzy",
+        "x": 0.51,
+        "y": 0.05,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": null,
+        "pin": {
+          "x": 0.72,
+          "y": 0.4788
+        }
+      },
+      {
+        "id": "teisxgp",
+        "x": 0.4918,
+        "y": 0.5449,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": null,
+        "pin": {
+          "x": 0.26,
+          "y": 0.8975
+        }
+      }
+    ],
+    "puntos": [],
+    "orden": [
+      "e1xpag6",
+      "o9zvuzy",
+      "teisxgp"
+    ],
+    "fragmentos": [
+      "Hoja solitaria y mustia,\npor el viento arrebatada\nde la encina que adornaba\nlos restos mirando estás.",
+      "Vamos por partes:\n¡comenzará muy puro,\npero al fin...¡carne!",
+      "Melancólica y dulce cual la huella\ncuando baña a lo lejos los espacios\nde la penumbra el misterioso tul.\nen un suspiro involuntario da,"
+    ],
+    "lineas": []
+  }
+}
