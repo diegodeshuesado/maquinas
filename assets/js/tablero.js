@@ -632,13 +632,16 @@
     const d = await wsPedir({ action: 'query', list: 'search', srsearch: `${q} insource:poem`, srnamespace: '0', srlimit: '30', srprop: 'size' });
     return ((d.query && d.query.search) || []).filter((r) => r.size > 120 && r.size < 20000).map((r) => r.title);
   }
+  // título sin la ruta del libro ni la aclaración entre paréntesis (que suele ser el autor)
+  const tituloLimpio = (t) => t.split('/').pop().replace(/\s*\([^)]*\)\s*$/, '').trim() || t;
   const decodificar = (t) => { const a = document.createElement('textarea'); a.innerHTML = t; return a.value; };
   function wsVersos(wt) {
     const bloques = [...wt.matchAll(/<poem[^>]*>([\s\S]*?)<\/poem>/gi)].map((m) => m[1]);
     let t = bloques.length ? bloques.join('\n\n') : wt;
     t = t.replace(/<!--[\s\S]*?-->/g, '').replace(/<ref[^>]*\/>/gi, '').replace(/<ref[\s\S]*?<\/ref>/gi, '');
     for (let i = 0; i < 4; i++) t = t.replace(/\{\{[^{}]*\}\}/g, '');
-    t = t.replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').replace(/\[https?:[^\s\]]+ ?([^\]]*)\]/g, '$1')
+    t = t.replace(/\[\[(?:Archivo|Imagen|Image|File|Categoría|Category):[^\]]*\]\]/gi, '')
+      .replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').replace(/\[https?:[^\s\]]+ ?([^\]]*)\]/g, '$1')
       .replace(/'{2,}/g, '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
       .replace(/^=+[^=\n]*=+\s*$/gm, '').replace(/^[:;*#]+\s*/gm, '').replace(/__[A-Z]+__/g, '');
     t = decodificar(t);
@@ -652,7 +655,7 @@
     const d = await wsPedir({ action: 'parse', page: titulo, prop: 'wikitext', redirects: '1' });
     const versos = wsVersos((d.parse && d.parse.wikitext) || '');
     if (versos.filter(Boolean).length < 2) throw new Error('sin versos');
-    return { titulo: titulo.split('/').pop(), versos };
+    return { titulo: tituloLimpio(titulo), versos };
   }
 
   let poemaAbierto = null;
@@ -688,7 +691,7 @@
   function mostrarResultados(titulos) {
     const caja = $('#ws-resultados'); caja.innerHTML = '';
     titulos.slice(0, 20).forEach((t) => {
-      const b = document.createElement('button'); b.className = 'resultado'; b.textContent = t.split('/').pop();
+      const b = document.createElement('button'); b.className = 'resultado'; b.textContent = tituloLimpio(t);
       b.addEventListener('click', () => abrirTitulo(t));
       caja.appendChild(b);
     });
