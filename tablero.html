@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="assets/css/style.css?v=20261106e">
+<link rel="stylesheet" href="assets/css/style.css?v=20261106g">
 </head>
 <body>
 <div class="envoltura asistente">
@@ -16,7 +16,10 @@
     <a class="marca-chica" href="./">máquinas_</a>
     <a class="maq" href="constelaciones_urbanas.html">constelaciones_urbanas</a>
   </header>
-  <p class="progreso" id="progreso" aria-live="polite">■□□□□ 1/5</p>
+  <div class="fila-progreso">
+    <button class="enlace" id="reiniciar" hidden>empezar de nuevo_</button>
+    <p class="progreso" id="progreso" aria-live="polite">■□□□□ 1/5</p>
+  </div>
 
   <!-- 1 · zona -->
   <section class="paso" data-paso="1">
@@ -130,6 +133,14 @@
       </div>
       <p class="mensaje" id="mensaje" aria-live="polite"></p>
     </form>
+    <div class="exito" id="exito" hidden>
+      <p class="paso-t" style="margin-top:8px">envío recibido_</p>
+      <p class="paso-d">gracias. tu constelación aparecerá en la galería cuando sea aprobada.</p>
+      <div class="acciones">
+        <button class="boton" id="nueva">nueva constelación_ →</button>
+        <a class="herr" href="galeria.html" style="text-decoration:none">ver galería_</a>
+      </div>
+    </div>
   </section>
 
   <p class="mensaje error" id="aviso" aria-live="assertive"></p>
@@ -150,7 +161,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="config.js?v=20261106e"></script>
-<script src="assets/js/tablero.js?v=20261106e"></script>
+<script src="config.js?v=20261106g"></script>
+<script src="assets/js/tablero.js?v=20261106g"></script>
 </body>
 </html>

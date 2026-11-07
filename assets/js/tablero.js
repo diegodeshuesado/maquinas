@@ -35,11 +35,12 @@
   // ── estado ────────────────────────────────────────────────────────────
   // tarjeta: { id, src, ar, w, x, y, label, coords }  (x, y = esquina sup. izq. en fracción del tablero)
   // punto imaginario: { id, x, y }  (centro en fracción del tablero)
-  let estado = {
+  const estadoInicial = () => ({
     paso: 1, zona: null, tarjetas: [], puntos: [], lineas: [],
     estilo: { trazo: 'continua', color: '#141414', grosor: 'medio' },
     campos: { titulo: '', narrativa: '', alias: '', ciudad: '' },
-  };
+  });
+  let estado = estadoInicial();
   let modo = 'mover';
   let elegida = null;
   const imgs = new Map();
@@ -436,10 +437,37 @@
     if (paso === 4 && !campos.narrativa.value.trim()) return 'falta el mito de tu constelación.';
     return null;
   }
+  const hayAvance = () => !!(estado.zona || estado.tarjetas.length || estado.puntos.length ||
+    estado.campos.titulo || estado.campos.narrativa);
+
+  // borra la constelación de este navegador (fotos incluidas); alias y ciudad se conservan si se pide
+  function reiniciar(conservarDatos) {
+    const { alias, ciudad } = estado.campos;
+    estado.tarjetas.forEach((t) => fotosDB.quitar(t.id));
+    imgs.clear();
+    estado = estadoInicial();
+    if (conservarDatos) Object.assign(estado.campos, { alias, ciudad });
+    Object.entries(campos).forEach(([k, el]) => { el.value = estado.campos[k] || ''; });
+    fondoListo = null;
+    if (mapa) marcarZona(false);
+    $('#vista').removeAttribute('src');
+    guardar();
+  }
+  $('#reiniciar').addEventListener('click', () => {
+    if (!confirm('¿borrar esta constelación y empezar una nueva?')) return;
+    reiniciar(true); irA(1);
+  });
+  $('#nueva').addEventListener('click', () => irA(1));
+
   function irA(paso) {
     estado.paso = paso;
     $$('.paso').forEach((s) => { s.hidden = Number(s.dataset.paso) !== paso; });
     $('#progreso').textContent = `${'■'.repeat(paso)}${'□'.repeat(TOTAL - paso)} ${paso}/${TOTAL}`;
+    $('#reiniciar').hidden = !hayAvance();
+    $('#exito').hidden = true;
+    $('.paso[data-paso="5"]').classList.remove('enviado');
+    $('#formulario').hidden = false;
+    $('.vista').hidden = false;
     $('#anterior').style.visibility = paso > 1 ? 'visible' : 'hidden';
     $('#siguiente').style.display = paso === TOTAL ? 'none' : '';
     aviso.textContent = '';
@@ -697,8 +725,17 @@
       }
       if (r.ok) { try { if (res.ok && !workerAnterior) localStorage.removeItem('maquinas_worker_png'); } catch {} }
       if (!r.ok) throw new Error(res.error || `error ${r.status}`);
-      avisoFinal('envío recibido_ gracias. tu pieza aparecerá en la galería cuando sea aprobada.');
+      avisoFinal('');
       $('#f-consent').checked = false;
+      // la pieza enviada ya no queda para editar: se limpia y se ofrece empezar otra
+      reiniciar(true);
+      $('#formulario').hidden = true;
+      $('.vista').hidden = true;
+      $('#exito').hidden = false;
+      $('.paso[data-paso="5"]').classList.add('enviado');
+      $('#reiniciar').hidden = true;
+      $('#anterior').style.visibility = 'hidden';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (ex) {
       avisoFinal(`no se pudo enviar: ${ex.message}. tu pieza sigue aquí; intenta de nuevo.`, true);
     } finally {

@@ -241,3 +241,10 @@ h2 { font-weight: 400; font-size: 22px; margin: 48px 0 16px; }
 /* OpenStreetMap en escala de grises, para que combine con el muro */
 .mapa-gris .leaflet-tile-pane { filter: grayscale(1) contrast(.85) brightness(1.06); }
 .mapa-gris .tablero .fondo-mapa { filter: grayscale(1); }
+
+.fila-progreso { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.fila-progreso .progreso { margin-left: auto; }
+.enlace { font: inherit; font-size: 13px; color: var(--gris); background: none; border: 0; padding: 10px 0 0; cursor: pointer; text-decoration: underline; }
+.exito { margin-top: 8px; }
+.paso.enviado > :not(.exito) { display: none; }
+.exito .acciones .herr { display: inline-flex; align-items: center; }
