@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20261106d">
+<link rel="stylesheet" href="assets/css/style.css?v=20261106e">
 </head>
 <body>
 <div class="envoltura">
@@ -30,7 +30,8 @@
 
 <div class="visor" id="visor" role="dialog" aria-modal="true" aria-label="pieza ampliada">
   <button class="boton cerrar" id="cerrar">cerrar_ ×</button>
-  <img id="visor-img" alt="">
+  <img id="visor-img" alt="" decoding="async">
+  <p style="text-align:center;font-size:13px"><a id="visor-original" href="#" target="_blank" rel="noopener">ver en resolución completa_</a></p>
 </div>
 
 <script>
@@ -39,19 +40,20 @@
   const estado = document.getElementById('estado-galeria');
   const visor = document.getElementById('visor');
   const vimg = document.getElementById('visor-img');
+  const original = document.getElementById('visor-original');
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   try {
     const r = await fetch('envios/index.json', { cache: 'no-store' });
     const piezas = r.ok ? await r.json() : [];
     if (!piezas.length) { estado.textContent = 'aún no hay piezas aprobadas_ sé la primera persona en participar.'; return; }
     rejilla.innerHTML = piezas.map((p) => `
-      <button class="pieza" data-src="${esc(p.imagen)}" data-alt="${esc(p.titulo)}">
-        <img src="${esc(p.imagen)}" alt="${esc(p.titulo)}" loading="lazy">
+      <button class="pieza" data-src="${esc(p.grande || p.imagen)}" data-original="${esc(p.imagen)}" data-alt="${esc(p.titulo)}">
+        <img src="${esc(p.mini || p.imagen)}" alt="${esc(p.titulo)}" loading="lazy" decoding="async">
         <span class="datos"><strong>${esc(p.titulo)}</strong>${esc(p.maquina)} · ${esc(p.alias || 'anónimo')}${p.ciudad ? ' · ' + esc(p.ciudad) : ''} · ${esc(p.fecha)}</span>
       </button>`).join('');
     rejilla.addEventListener('click', (e) => {
       const b = e.target.closest('.pieza'); if (!b) return;
-      vimg.src = b.dataset.src; vimg.alt = b.dataset.alt; visor.classList.add('abierto');
+      vimg.src = b.dataset.src; vimg.alt = b.dataset.alt; original.href = b.dataset.original; visor.classList.add('abierto');
     });
   } catch { estado.textContent = 'no se pudo cargar la galería.'; }
   const cerrar = () => visor.classList.remove('abierto');

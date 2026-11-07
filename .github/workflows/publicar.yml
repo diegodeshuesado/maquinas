@@ -27,6 +27,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: miniaturas de la galería
+        run: |
+          pip install --quiet pillow
+          python scripts/miniaturas.py
       - name: índice de la galería
         run: node scripts/indice.mjs
       - uses: actions/configure-pages@v5
