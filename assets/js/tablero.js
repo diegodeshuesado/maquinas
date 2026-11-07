@@ -1,264 +1,422 @@
-/* máquinas_ · tablero
-   Tarjetas arrastrables, líneas rectas tipo constelación, exportación PNG y envío.
+/* máquinas_ · constelaciones_urbanas
+   Asistente de 5 pasos: zona en el mapa → luces (fotos) → constelación → mito → revisar y enviar.
    Todo ocurre en el navegador; nada sale hasta que la persona envía. */
 (() => {
   'use strict';
 
-  // ── configuración por máquina ─────────────────────────────────────────
-  const MAQUINAS = {
-    constelaciones_urbanas: {
-      titulo: 'máquina_constelaciones_urbanas',
-      credito: 'Diego Deshuesado y Daniel Vázquez',
-      narrativa: 'mito',
-      instructivo: 'constelaciones_urbanas.html',
-    },
+  // ── configuración ─────────────────────────────────────────────────────
+  const M = {
+    id: 'constelaciones_urbanas',
+    titulo: 'máquina_constelaciones_urbanas',
+    credito: 'Diego Deshuesado y Daniel Vázquez',
+    narrativa: 'mito',
   };
   const LICENCIA = 'CC BY-NC-SA 4.0';
   const CFG = window.MAQUINAS_CONFIG || {};
-
-  const params = new URLSearchParams(location.search);
-  const ID = MAQUINAS[params.get('maquina')] ? params.get('maquina') : 'constelaciones_urbanas';
-  const M = MAQUINAS[ID];
-  const CLAVE = `maquinas_${ID}`;
-
-  // ── elementos ─────────────────────────────────────────────────────────
-  const $ = (s) => document.querySelector(s);
-  const tablero = $('#tablero');
-  const svg = $('#lineas');
-  const vacio = $('#vacio');
-  const ayuda = $('#ayuda');
-  const form = $('#formulario');
-  const mensaje = $('#mensaje');
-  const campos = {
-    titulo: $('#f-titulo'), narrativa: $('#f-narrativa'), ubicacion: $('#f-ubicacion'),
-    alias: $('#f-alias'), ciudad: $('#f-ciudad'),
-  };
-
-  $('#titulo-maquina').innerHTML = M.titulo.replace(/_/g, '_<wbr>');
-  $('#credito-maquina').textContent = M.credito;
-  $('#enlace-instructivo').href = M.instructivo;
-  $('#l-narrativa').textContent = `${M.narrativa}:/<`;
-  document.title = `${M.titulo} · tablero`;
+  const CLAVE = 'maquinas_constelaciones_urbanas_v2';
+  const TOTAL = 5;
+  const TESELAS = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png';
+  const ATRIB = '© OpenStreetMap © CARTO';
+  const INICIO = { lat: 20.5931, lng: -100.3923, zoom: 15 }; // centro de Querétaro mientras no hay ubicación
+  const OPACIDAD_MAPA = 0.35;
+  const TRAZOS = { continua: '', discontinua: '8 6', punteada: '0.1 7' };
+  const GROSORES = { fino: 1.2, medio: 2, grueso: 3.4 };
+  const COLORES = [
+    ['#141414', 'negro'], ['#8a8984', 'gris'], ['#ffffff', 'blanco'], ['#e3a83a', 'ámbar'], ['#b3261e', 'rojo'],
+  ];
 
   // ── estado ────────────────────────────────────────────────────────────
-  // tarjeta: { id, src, x, y (fracciones del tablero, esquina sup. izq.), w (fracción del ancho), ar (alto/ancho de la imagen), label }
-  let estado = { tarjetas: [], lineas: [] };
+  // tarjeta: { id, src, ar, w, x, y, label, coords }  (x, y = esquina sup. izq. en fracción del tablero)
+  // punto imaginario: { id, x, y }  (centro en fracción del tablero)
+  let estado = {
+    paso: 1, zona: null, tarjetas: [], puntos: [], lineas: [],
+    estilo: { trazo: 'continua', color: '#141414', grosor: 'medio' },
+    campos: { titulo: '', narrativa: '', alias: '', ciudad: '' },
+  };
   let modo = 'mover';
   let elegida = null;
-  const imgs = new Map(); // id → HTMLImageElement (para exportar)
+  const imgs = new Map();
+
+  // ── elementos ─────────────────────────────────────────────────────────
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const tablero = $('#tablero'), svg = $('#lineas'), fondo = $('#fondo'), vacio = $('#vacio');
+  const aviso = $('#aviso'), mensaje = $('#mensaje');
+  const campos = { titulo: $('#f-titulo'), narrativa: $('#f-narrativa'), alias: $('#f-alias'), ciudad: $('#f-ciudad') };
 
   const AYUDAS = {
-    mover: 'mover_ arrastra las fotos. escribe un título en la cédula negra de cada una.',
-    conectar: 'conectar_ toca una foto y luego otra para trazar una línea. repite para formar la constelación.',
-    borrar: 'borrar_ toca una línea o una foto para quitarla.',
+    mover: 'mover_ arrastra las fotos. escribe un título en su cédula si quieres.',
+    conectar: 'conectar_ toca una luz y luego otra para trazar una línea.',
+    punto: '+ punto_ toca un espacio vacío para añadir un punto imaginario.',
+    borrar: 'borrar_ toca una línea, una foto o un punto para quitarlo.',
   };
 
   const uid = () => Math.random().toString(36).slice(2, 9);
-  const dims = () => ({ W: tablero.clientWidth, H: tablero.clientHeight });
+  // tamaño del tablero; si está oculto (paso 1 o 5) se usa el último tamaño visible
+  let ultimas = null;
+  const dims = () => {
+    if (tablero.clientWidth) ultimas = { W: tablero.clientWidth, H: tablero.clientHeight };
+    if (ultimas) return ultimas;
+    const W = Math.min(720, window.innerWidth - 40);
+    return { W, H: W * (window.innerWidth <= 640 ? 4 / 3 : 3 / 4) };
+  };
   const anchoTarjeta = () => (tablero.clientWidth < 500 ? 0.3 : 0.2);
+  const redondear = (n) => Math.round(n * 1000) / 1000; // ~100 m
+  const ubicacionTexto = () => (estado.zona ? `${estado.zona.lat.toFixed(3)}, ${estado.zona.lng.toFixed(3)}` : '');
+  const nodos = () => [...estado.tarjetas, ...estado.puntos];
 
   // ── guardar / recuperar (solo en este navegador) ──────────────────────
   function guardar() {
-    const datos = { ...estado, campos: Object.fromEntries(Object.entries(campos).map(([k, el]) => [k, el.value])) };
-    try { localStorage.setItem(CLAVE, JSON.stringify(datos)); }
-    catch { try { localStorage.setItem(CLAVE, JSON.stringify({ ...datos, tarjetas: [], lineas: [] })); } catch {} }
+    if (aviso) aviso.textContent = '';
+    Object.entries(campos).forEach(([k, el]) => { estado.campos[k] = el.value; });
+    try { localStorage.setItem(CLAVE, JSON.stringify(estado)); }
+    catch { try { localStorage.setItem(CLAVE, JSON.stringify({ ...estado, tarjetas: [], lineas: [] })); } catch {} }
   }
   function recuperar() {
     try {
       const d = JSON.parse(localStorage.getItem(CLAVE) || 'null');
-      if (!d) return;
-      estado = { tarjetas: d.tarjetas || [], lineas: d.lineas || [] };
-      for (const [k, v] of Object.entries(d.campos || {})) if (campos[k]) campos[k].value = v;
+      if (d) estado = { ...estado, ...d, estilo: { ...estado.estilo, ...(d.estilo || {}) }, campos: { ...estado.campos, ...(d.campos || {}) } };
     } catch {}
+    Object.entries(campos).forEach(([k, el]) => { el.value = estado.campos[k] || ''; });
   }
 
-  // ── subir fotos (se reducen antes de usarse) ──────────────────────────
+  // ── mapa (paso 1) ─────────────────────────────────────────────────────
+  let mapa = null, moviendoPorCodigo = false;
+  function iniciarMapa() {
+    if (mapa || !window.L) return;
+    const z = estado.zona || INICIO;
+    mapa = L.map('mapa', { zoomControl: true, attributionControl: true }).setView([z.lat, z.lng], z.zoom);
+    mapa.attributionControl.setPrefix(false);
+    L.tileLayer(TESELAS, { subdomains: 'abcd', maxZoom: 20, crossOrigin: true, attribution: ATRIB, tileSize: 256 }).addTo(mapa);
+    mapa.on('movestart zoomstart', () => { if (!moviendoPorCodigo && estado.zona) marcarZona(false); });
+    marcarZona(!!estado.zona);
+  }
+  function marcarZona(fija) {
+    $('#fijado').hidden = !fija;
+    $('#fijar').classList.toggle('on', fija);
+    $('#estado-zona').textContent = fija
+      ? `zona fijada_ ${ubicacionTexto()}`
+      : 'cuando tengas tu zona en pantalla, toca «fijar zona».';
+    if (!fija) estado.zona = null;
+  }
+  $('#fijar').addEventListener('click', () => {
+    if (!mapa) return;
+    const c = mapa.getCenter(), el = $('#mapa');
+    estado.zona = { lat: c.lat, lng: c.lng, zoom: mapa.getZoom(), w: el.clientWidth, h: el.clientHeight };
+    marcarZona(true); aviso.textContent = ''; guardar(); fondoListo = null;
+  });
+  $('#mi-ubicacion').addEventListener('click', () => {
+    if (!navigator.geolocation) return ($('#estado-zona').textContent = 'tu navegador no permite ubicarte; mueve el mapa a mano.');
+    $('#estado-zona').textContent = 'buscando tu ubicación_';
+    navigator.geolocation.getCurrentPosition(
+      (p) => { mapa.setView([p.coords.latitude, p.coords.longitude], 17); $('#estado-zona').textContent = 'ya estás en el mapa. ajusta el encuadre y toca «fijar zona».'; },
+      () => { $('#estado-zona').textContent = 'no se pudo obtener tu ubicación; mueve el mapa a mano.'; },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  });
+
+  // dibuja el mapa de la zona en un lienzo de W×H (para el fondo del tablero y la pieza final)
+  function proyectar(lat, lng, z) {
+    const s = 256 * 2 ** z, sin = Math.sin((lat * Math.PI) / 180);
+    return { x: ((lng + 180) / 360) * s, y: (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * s };
+  }
+  function cargar(url) {
+    return new Promise((ok) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => ok(im); im.onerror = () => ok(null); im.src = url; });
+  }
+  async function dibujarMapa(zona, W, H) {
+    const c = document.createElement('canvas'); c.width = Math.round(W); c.height = Math.round(H);
+    const g = c.getContext('2d');
+    g.fillStyle = '#ecebe8'; g.fillRect(0, 0, c.width, c.height);
+    const z = zona.zoom + Math.log2(W / zona.w);
+    const tz = Math.max(1, Math.min(20, Math.round(z)));
+    const s = 2 ** (z - tz), n = 2 ** tz;
+    const cp = proyectar(zona.lat, zona.lng, tz);
+    const izq = cp.x - W / 2 / s, arr = cp.y - H / 2 / s;
+    const tareas = [];
+    for (let tx = Math.floor(izq / 256); tx <= Math.floor((izq + W / s) / 256); tx++) {
+      for (let ty = Math.max(0, Math.floor(arr / 256)); ty <= Math.min(n - 1, Math.floor((arr + H / s) / 256)); ty++) {
+        const wx = ((tx % n) + n) % n;
+        const url = TESELAS.replace('{s}', 'abcd'[(wx + ty) % 4]).replace('{z}', tz).replace('{x}', wx).replace('{y}', ty);
+        tareas.push(cargar(url).then((im) => { if (im) g.drawImage(im, (tx * 256 - izq) * s, (ty * 256 - arr) * s, 256 * s + 0.6, 256 * s + 0.6); }));
+      }
+    }
+    await Promise.all(tareas);
+    return c;
+  }
+  let fondoListo = null;
+  async function pintarFondo() {
+    const { W, H } = dims();
+    if (!estado.zona || !W) { fondo.getContext('2d') && fondo.getContext('2d').clearRect(0, 0, fondo.width, fondo.height); return; }
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const clave = `${W}x${H}@${dpr}:${estado.zona.lat},${estado.zona.lng},${estado.zona.zoom}`;
+    if (fondoListo === clave) return;
+    fondoListo = clave;
+    const c = await dibujarMapa(estado.zona, W * dpr, H * dpr);
+    if (fondoListo !== clave) return;
+    fondo.width = c.width; fondo.height = c.height;
+    fondo.getContext('2d').drawImage(c, 0, 0);
+  }
+
+  // ── fotos (paso 2) ────────────────────────────────────────────────────
   function reducir(file, max = 1400) {
     return new Promise((ok, mal) => {
-      const url = URL.createObjectURL(file);
-      const im = new Image();
+      const url = URL.createObjectURL(file), im = new Image();
       im.onload = () => {
         const k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
         const c = document.createElement('canvas');
-        c.width = Math.round(im.naturalWidth * k);
-        c.height = Math.round(im.naturalHeight * k);
+        c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
         c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
         URL.revokeObjectURL(url);
-        ok({ src: c.toDataURL('image/jpeg', 0.85), ar: c.height / c.width });
+        ok({ src: c.toDataURL('image/jpeg', 0.88), ar: c.height / c.width });
       };
       im.onerror = () => { URL.revokeObjectURL(url); mal(new Error('imagen')); };
       im.src = url;
     });
   }
-
-  // «cámara» abre la cámara trasera en el celular; «galería» permite elegir varias fotos
-  document.querySelectorAll('.entrada-foto').forEach((entrada) => entrada.addEventListener('change', async (e) => {
+  async function coordenadasSiPermitidas() {
+    try {
+      if (!navigator.permissions || !navigator.geolocation) return null;
+      const p = await navigator.permissions.query({ name: 'geolocation' });
+      if (p.state !== 'granted') return null;
+      return await new Promise((ok) => navigator.geolocation.getCurrentPosition(
+        (pos) => ok({ lat: redondear(pos.coords.latitude), lng: redondear(pos.coords.longitude) }), () => ok(null), { timeout: 6000 }));
+    } catch { return null; }
+  }
+  $$('.entrada-foto').forEach((entrada) => entrada.addEventListener('change', async (e) => {
     const archivos = [...e.target.files].filter((f) => f.type.startsWith('image/'));
-    const w = anchoTarjeta();
-    const { W, H } = dims();
+    const coords = e.target.id === 'camara' ? await coordenadasSiPermitidas() : null;
+    const w = anchoTarjeta(), { W, H } = dims();
     for (const [i, f] of archivos.entries()) {
       try {
         const { src, ar } = await reducir(f);
+        // se acomodan en cuadrícula con un ligero desfase; luego la persona las mueve
         const n = estado.tarjetas.length;
-        const altoFrac = (w * W * ar) / H;
+        const altoFrac = (w * W * ar + 22) / H;
+        const cols = Math.max(2, Math.floor(0.94 / (w + 0.04)));
+        const filas = Math.max(1, Math.floor(0.94 / (altoFrac + 0.04)));
+        const col = n % cols, fila = Math.floor(n / cols) % filas;
+        const jitter = ((n * 37) % 7) / 100;
         estado.tarjetas.push({
-          id: uid(), src, ar, w, label: '',
-          x: Math.min(0.06 + ((n * 0.17) % 0.7), 1 - w),
-          y: Math.min(0.06 + ((n * 0.11) % 0.6) + (i % 2) * 0.05, Math.max(0, 1 - altoFrac)),
+          id: uid(), src, ar, w, label: '', coords,
+          x: Math.min(0.03 + col * (0.94 / cols) + jitter / 2, 1 - w),
+          y: Math.min(0.03 + fila * (altoFrac + 0.05) + jitter, Math.max(0, 1 - altoFrac)),
         });
-      } catch { aviso('no se pudo leer una de las imágenes.', true); }
+      } catch { aviso.textContent = 'no se pudo leer una de las imágenes.'; }
     }
     e.target.value = '';
     pintar(); guardar();
   }));
 
-  // ── pintar ────────────────────────────────────────────────────────────
+  // ── pintar el tablero ─────────────────────────────────────────────────
   function pintar() {
-    tablero.querySelectorAll('.tarjeta').forEach((n) => n.remove());
-    vacio.style.display = estado.tarjetas.length ? 'none' : '';
+    tablero.querySelectorAll('.nodo').forEach((n) => n.remove());
+    vacio.style.display = estado.tarjetas.length || estado.puntos.length ? 'none' : '';
     const { W } = dims();
+    const editable = estado.paso >= 2 && estado.paso <= 4;
     for (const t of estado.tarjetas) {
       const el = document.createElement('div');
-      el.className = 'tarjeta' + (elegida === t.id ? ' elegida' : '');
+      el.className = 'tarjeta nodo' + (elegida === t.id ? ' elegida' : '');
       el.dataset.id = t.id;
-      el.style.left = `${t.x * 100}%`;
-      el.style.top = `${t.y * 100}%`;
-      el.style.width = `${t.w * W}px`;
+      el.style.left = `${t.x * 100}%`; el.style.top = `${t.y * 100}%`; el.style.width = `${t.w * W}px`;
       const img = document.createElement('img');
-      img.src = t.src; img.alt = t.label || 'foto de la constelación'; img.draggable = false;
+      img.src = t.src; img.alt = t.label || 'foto de una luz'; img.draggable = false;
       const inp = document.createElement('input');
       inp.value = t.label; inp.maxLength = 40; inp.placeholder = 'título_';
       inp.setAttribute('aria-label', 'título de esta foto');
-      inp.addEventListener('input', () => { t.label = inp.value; img.alt = inp.value || 'foto'; guardar(); });
-      inp.addEventListener('pointerdown', (ev) => { if (modo === 'mover') ev.stopPropagation(); });
-      inp.readOnly = modo !== 'mover';
+      inp.readOnly = !(editable && (modo === 'mover'));
+      inp.addEventListener('input', () => { t.label = inp.value; img.alt = inp.value || 'foto de una luz'; guardar(); });
+      inp.addEventListener('pointerdown', (ev) => { if (!inp.readOnly) ev.stopPropagation(); });
       el.append(img, inp);
       tablero.appendChild(el);
       if (!imgs.has(t.id)) { const im = new Image(); im.src = t.src; imgs.set(t.id, im); }
     }
+    for (const p of estado.puntos) {
+      const el = document.createElement('div');
+      el.className = 'estrella nodo' + (elegida === p.id ? ' elegida' : '');
+      el.dataset.id = p.id;
+      el.style.left = `${p.x * 100}%`; el.style.top = `${p.y * 100}%`;
+      el.style.borderColor = estado.estilo.color === '#ffffff' ? '#141414' : estado.estilo.color;
+      el.title = 'punto imaginario';
+      tablero.appendChild(el);
+    }
     trazar();
   }
 
-  function centro(t) {
-    const el = tablero.querySelector(`.tarjeta[data-id="${t.id}"]`);
+  function centro(id) {
     const { W, H } = dims();
-    const img = el && el.querySelector('img');
-    const w = t.w * W;
-    const h = img && img.offsetHeight ? img.offsetHeight : w * t.ar;
+    const p = estado.puntos.find((x) => x.id === id);
+    if (p) return { x: p.x * W, y: p.y * H, imaginario: true };
+    const t = estado.tarjetas.find((x) => x.id === id);
+    if (!t) return null;
+    const img = tablero.querySelector(`.tarjeta[data-id="${t.id}"] img`);
+    const w = t.w * W, h = img && img.offsetHeight ? img.offsetHeight : w * t.ar;
     return { x: t.x * W + w / 2, y: t.y * H + h / 2 };
   }
 
   function trazar() {
     const { W, H } = dims();
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    const porId = new Map(estado.tarjetas.map((t) => [t.id, t]));
-    estado.lineas = estado.lineas.filter(([a, b]) => porId.has(a) && porId.has(b));
+    const ids = new Set(nodos().map((n) => n.id));
+    estado.lineas = estado.lineas.filter(([a, b]) => ids.has(a) && ids.has(b));
+    const e = estado.estilo, gw = GROSORES[e.grosor], dash = TRAZOS[e.trazo];
+    const halo = e.color === '#ffffff' ? 'rgba(20,20,20,.55)' : 'rgba(255,255,255,.85)';
     let html = '';
-    const puntos = new Map();
+    const extremos = new Map();
     estado.lineas.forEach(([a, b], i) => {
-      const p = centro(porId.get(a)), q = centro(porId.get(b));
-      puntos.set(a, p); puntos.set(b, q);
-      html += `<g data-i="${i}">
-        <line class="toque" x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}"/>
-        <line class="halo" x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}"/>
-        <line class="trazo" x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}"/></g>`;
+      const p = centro(a), q = centro(b);
+      if (!p || !q) return;
+      if (!p.imaginario) extremos.set(a, p);
+      if (!q.imaginario) extremos.set(b, q);
+      const xy = `x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}"`;
+      html += `<g data-i="${i}"><line class="toque" ${xy}/>
+        <line ${xy} stroke="${halo}" stroke-width="${gw + 2.2}" stroke-dasharray="${dash}" stroke-linecap="round"/>
+        <line class="trazo" ${xy} stroke="${e.color}" stroke-width="${gw}" stroke-dasharray="${dash}" stroke-linecap="round"/></g>`;
     });
-    for (const p of puntos.values()) html += `<circle cx="${p.x}" cy="${p.y}" r="4.5"/>`;
+    for (const p of extremos.values()) html += `<circle cx="${p.x}" cy="${p.y}" r="${3 + gw}" fill="${e.color}" stroke="${e.color === '#ffffff' ? '#141414' : '#fff'}" stroke-width="1.5"/>`;
     svg.innerHTML = html;
     svg.querySelectorAll('line.toque').forEach((ln) => {
       ln.style.pointerEvents = modo === 'borrar' ? 'stroke' : 'none';
-      ln.addEventListener('click', () => {
-        estado.lineas.splice(Number(ln.parentNode.dataset.i), 1);
-        trazar(); guardar();
-      });
+      ln.addEventListener('click', () => { estado.lineas.splice(Number(ln.parentNode.dataset.i), 1); trazar(); guardar(); });
     });
   }
 
-  // ── modos ─────────────────────────────────────────────────────────────
+  // ── modos e interacción ───────────────────────────────────────────────
   function cambiarModo(m) {
     modo = m; elegida = null;
-    document.querySelectorAll('[data-modo]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.modo === m)));
-    tablero.className = `tablero modo-${m}`;
-    ayuda.textContent = AYUDAS[m];
+    $$('[data-modo]').forEach((b) => b.classList.toggle('on', b.dataset.modo === m));
+    tablero.className = `tablero marco modo-${m}`;
+    const seccion = $(`.paso[data-paso="${estado.paso}"]`);
+    $$('[data-ayuda]', seccion).forEach((p) => { p.textContent = AYUDAS[m] || ''; });
     pintar();
   }
-  document.querySelectorAll('[data-modo]').forEach((b) => b.addEventListener('click', () => cambiarModo(b.dataset.modo)));
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-modo]'); if (b) cambiarModo(b.dataset.modo);
+  });
 
-  // ── arrastrar / conectar / borrar ─────────────────────────────────────
   let arrastre = null;
   tablero.addEventListener('pointerdown', (e) => {
-    const el = e.target.closest('.tarjeta');
-    if (!el) { if (modo === 'conectar' && elegida) { elegida = null; pintar(); } return; }
-    const t = estado.tarjetas.find((x) => x.id === el.dataset.id);
-    if (!t) return;
+    const el = e.target.closest('.nodo');
+    const r = tablero.getBoundingClientRect();
+    if (!el) {
+      if (modo === 'punto' && estado.paso === 3 && !e.target.closest('line')) {
+        estado.puntos.push({ id: uid(), x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height });
+        pintar(); guardar();
+      } else if (modo === 'conectar' && elegida) { elegida = null; pintar(); }
+      return;
+    }
+    const id = el.dataset.id;
+    const nodo = nodos().find((n) => n.id === id);
+    if (!nodo) return;
     e.preventDefault();
 
     if (modo === 'borrar') {
-      estado.tarjetas = estado.tarjetas.filter((x) => x.id !== t.id);
-      imgs.delete(t.id);
-      pintar(); guardar(); return;
+      estado.tarjetas = estado.tarjetas.filter((x) => x.id !== id);
+      estado.puntos = estado.puntos.filter((x) => x.id !== id);
+      imgs.delete(id); pintar(); guardar(); return;
     }
     if (modo === 'conectar') {
-      if (!elegida) { elegida = t.id; pintar(); return; }
-      if (elegida !== t.id) {
-        const ya = estado.lineas.some(([a, b]) => (a === elegida && b === t.id) || (a === t.id && b === elegida));
-        if (!ya) estado.lineas.push([elegida, t.id]);
-        // la foto recién tocada queda elegida para seguir trazando en cadena
-        elegida = t.id; guardar();
-      } else { elegida = null; }
+      if (!elegida) { elegida = id; pintar(); return; }
+      if (elegida !== id) {
+        const ya = estado.lineas.some(([a, b]) => (a === elegida && b === id) || (a === id && b === elegida));
+        if (!ya) estado.lineas.push([elegida, id]);
+        elegida = id; guardar();
+      } else elegida = null;
       pintar(); return;
     }
-    // mover: traer al frente
-    estado.tarjetas = estado.tarjetas.filter((x) => x !== t).concat(t);
-    const r = tablero.getBoundingClientRect();
-    arrastre = { t, el, dx: e.clientX - r.left - t.x * r.width, dy: e.clientY - r.top - t.y * r.height };
-    tablero.appendChild(el);
+    if (modo !== 'mover' && modo !== 'punto') return;
+    const esPunto = el.classList.contains('estrella');
+    if (!esPunto) {
+      estado.tarjetas = estado.tarjetas.filter((x) => x !== nodo).concat(nodo);
+      tablero.appendChild(el);
+    }
+    arrastre = { nodo, el, esPunto, dx: e.clientX - r.left - nodo.x * r.width, dy: e.clientY - r.top - nodo.y * r.height };
     el.classList.add('arrastrando');
     el.setPointerCapture(e.pointerId);
   });
-
   tablero.addEventListener('pointermove', (e) => {
     if (!arrastre) return;
-    const r = tablero.getBoundingClientRect();
-    const { t, el } = arrastre;
-    const wf = t.w, hf = el.offsetHeight / r.height;
-    t.x = Math.min(Math.max((e.clientX - r.left - arrastre.dx) / r.width, 0), 1 - wf);
-    t.y = Math.min(Math.max((e.clientY - r.top - arrastre.dy) / r.height, 0), Math.max(0, 1 - hf));
-    el.style.left = `${t.x * 100}%`;
-    el.style.top = `${t.y * 100}%`;
+    const r = tablero.getBoundingClientRect(), { nodo, el, esPunto } = arrastre;
+    const wf = esPunto ? 0 : nodo.w, hf = esPunto ? 0 : el.offsetHeight / r.height;
+    nodo.x = Math.min(Math.max((e.clientX - r.left - arrastre.dx) / r.width, 0), 1 - wf);
+    nodo.y = Math.min(Math.max((e.clientY - r.top - arrastre.dy) / r.height, 0), Math.max(0, 1 - hf));
+    el.style.left = `${nodo.x * 100}%`; el.style.top = `${nodo.y * 100}%`;
     trazar();
   });
   const soltar = () => { if (arrastre) { arrastre.el.classList.remove('arrastrando'); arrastre = null; guardar(); } };
   tablero.addEventListener('pointerup', soltar);
   tablero.addEventListener('pointercancel', soltar);
+  new ResizeObserver(() => { pintar(); pintarFondo(); }).observe(tablero);
 
-  new ResizeObserver(() => pintar()).observe(tablero);
-
-  $('#limpiar').addEventListener('click', () => {
-    if (!estado.tarjetas.length || confirm('¿borrar todas las fotos y líneas del tablero?')) {
-      estado = { tarjetas: [], lineas: [] }; imgs.clear(); pintar(); guardar();
-    }
+  // ── estilo de línea (paso 3) ──────────────────────────────────────────
+  $('#colores').innerHTML = COLORES.map(([c, n]) =>
+    `<button class="muestra" data-color="${c}" style="background:${c}" aria-label="${n}" title="${n}"></button>`).join('');
+  function marcarEstilo() {
+    const e = estado.estilo;
+    $$('[data-trazo]').forEach((b) => b.classList.toggle('on', b.dataset.trazo === e.trazo));
+    $$('[data-grosor]').forEach((b) => b.classList.toggle('on', b.dataset.grosor === e.grosor));
+    $$('[data-color]').forEach((b) => b.classList.toggle('sel', b.dataset.color === e.color));
+  }
+  document.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-trazo],[data-grosor],[data-color]');
+    if (!b) return;
+    if (b.dataset.trazo) estado.estilo.trazo = b.dataset.trazo;
+    if (b.dataset.grosor) estado.estilo.grosor = b.dataset.grosor;
+    if (b.dataset.color) estado.estilo.color = b.dataset.color;
+    marcarEstilo(); pintar(); guardar();
   });
-  Object.values(campos).forEach((el) => el.addEventListener('input', guardar));
 
-  // ── exportar PNG ──────────────────────────────────────────────────────
+  // ── pasos ─────────────────────────────────────────────────────────────
+  function validar(paso) {
+    if (paso === 1 && !estado.zona) return 'fija tu zona en el mapa para continuar.';
+    if (paso === 2 && estado.tarjetas.length < 2) return 'fotografía al menos dos luces para continuar.';
+    if (paso === 3 && !estado.lineas.length) return 'traza al menos una línea entre tus luces.';
+    if (paso === 4 && !campos.titulo.value.trim()) return 'falta el título de tu constelación.';
+    if (paso === 4 && !campos.narrativa.value.trim()) return 'falta el mito de tu constelación.';
+    return null;
+  }
+  function irA(paso) {
+    estado.paso = paso;
+    $$('.paso').forEach((s) => { s.hidden = Number(s.dataset.paso) !== paso; });
+    $('#progreso').textContent = `${'■'.repeat(paso)}${'□'.repeat(TOTAL - paso)} ${paso}/${TOTAL}`;
+    $('#anterior').style.visibility = paso > 1 ? 'visible' : 'hidden';
+    $('#siguiente').style.display = paso === TOTAL ? 'none' : '';
+    aviso.textContent = '';
+    const slot = $(`.paso[data-paso="${paso}"] [data-slot]`);
+    (slot || $('#guardado')).appendChild(tablero);
+    if (paso === 1) {
+      iniciarMapa();
+      setTimeout(() => { if (!mapa) return; moviendoPorCodigo = true; mapa.invalidateSize(); moviendoPorCodigo = false; }, 50);
+    }
+    cambiarModo('mover');
+    marcarEstilo();
+    if (paso >= 2 && paso <= 4) { fondoListo = null; pintarFondo(); }
+    if (paso === TOTAL) actualizarVista();
+    guardar();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  $('#siguiente').addEventListener('click', () => {
+    const err = validar(estado.paso);
+    if (err) { aviso.textContent = err; return; }
+    irA(Math.min(TOTAL, estado.paso + 1));
+  });
+  $('#anterior').addEventListener('click', () => irA(Math.max(1, estado.paso - 1)));
+  Object.values(campos).forEach((el) => el.addEventListener('input', () => { guardar(); if (estado.paso === TOTAL) programarVista(); }));
+
+  // ── componer la pieza final ───────────────────────────────────────────
   const FUENTE = '"Share Tech Mono", ui-monospace, Menlo, Consolas, monospace';
-
   function envolver(ctx, texto, ancho) {
-    const lineas = [];
+    const out = [];
     for (const parrafo of String(texto).split(/\n/)) {
-      if (!parrafo.trim()) { lineas.push(''); continue; }
+      if (!parrafo.trim()) { out.push(''); continue; }
       let actual = '';
       for (const palabra of parrafo.split(/\s+/)) {
         const prueba = actual ? `${actual} ${palabra}` : palabra;
-        if (ctx.measureText(prueba).width > ancho && actual) { lineas.push(actual); actual = palabra; }
-        else actual = prueba;
+        if (ctx.measureText(prueba).width > ancho && actual) { out.push(actual); actual = palabra; } else actual = prueba;
       }
-      lineas.push(actual);
+      out.push(actual);
     }
-    return lineas;
+    return out;
   }
-
   async function esperarImagenes() {
     await Promise.all(estado.tarjetas.map((t) => {
       let im = imgs.get(t.id);
@@ -267,52 +425,47 @@
     }));
   }
 
-  async function componer() {
+  async function componer(S = 2, conMapa = true) {
     try { await document.fonts.load(`20px "Share Tech Mono"`); } catch {}
     await esperarImagenes();
-
-    const W = 1400, P = 72, interior = W - P * 2;
+    const W = 1400 * S, P = 72 * S, interior = W - P * 2;
     const { W: bw, H: bh } = dims();
-    const esc = interior / bw;
-    // grosor de líneas, puntos y cédulas: igual en celular y escritorio
-    const k = Math.min(esc, 1.6);
+    const esc = interior / bw, k = S * Math.min(1256 / bw, 1.6);
     const BH = Math.round(bh * esc);
-    const v = Object.fromEntries(Object.entries(campos).map(([k, el]) => [k, el.value.trim()]));
+    const v = Object.fromEntries(Object.entries(campos).map(([kk, el]) => [kk, el.value.trim()]));
     const fecha = new Date().toISOString().slice(0, 10);
+    const e = estado.estilo;
 
     const medir = document.createElement('canvas').getContext('2d');
-    medir.font = `24px ${FUENTE}`;
-    const narr = envolver(medir, v.narrativa || '—', interior);
-    const tit = (() => { medir.font = `40px ${FUENTE}`; return envolver(medir, v.titulo || 'sin título', interior); })();
+    medir.font = `${40 * S}px ${FUENTE}`; const tit = envolver(medir, v.titulo || 'sin título', interior);
+    medir.font = `${24 * S}px ${FUENTE}`; const narr = envolver(medir, v.narrativa || '—', interior);
 
-    // alto total
-    let alto = P + 26 + 18 + 48 + 40 + BH + 56 + tit.length * 50 + 24 + 30 + narr.length * 36 + 24;
-    if (v.ubicacion) alto += 70;
-    alto += 60 + 26 + 26 + P;
+    let alto = P + 44 * S + 88 * S + BH + 56 * S + tit.length * 50 * S + 24 * S + 30 * S + narr.length * 36 * S + 24 * S;
+    if (estado.zona) alto += 70 * S;
+    alto += 60 * S + 26 * S * 3 + P;
 
     const c = document.createElement('canvas');
     c.width = W; c.height = Math.ceil(alto);
     const g = c.getContext('2d');
     g.fillStyle = '#f3f2ef'; g.fillRect(0, 0, W, c.height);
     g.textBaseline = 'top';
-    g.fillStyle = '#141414';
-
     let y = P;
-    g.font = `22px ${FUENTE}`; g.fillStyle = '#6f6f6c'; g.fillText('máquinas_', P, y); y += 26 + 18;
-    g.font = `44px ${FUENTE}`; g.fillStyle = '#141414'; g.fillText(M.titulo, P, y); y += 48 + 40;
+    g.font = `${22 * S}px ${FUENTE}`; g.fillStyle = '#6f6f6c'; g.fillText('máquinas_', P, y); y += 44 * S;
+    g.font = `${44 * S}px ${FUENTE}`; g.fillStyle = '#141414'; g.fillText(M.titulo, P, y); y += 88 * S;
 
-    // tablero
+    // tablero con el mapa translúcido
     const ox = P, oy = y;
     g.fillStyle = '#ffffff'; g.fillRect(ox, oy, interior, BH);
-    g.lineWidth = 1.5; g.strokeStyle = '#141414'; g.strokeRect(ox + 0.5, oy + 0.5, interior - 1, BH - 1);
+    if (conMapa && estado.zona) {
+      const mc = await dibujarMapa(estado.zona, interior, BH);
+      g.save(); g.globalAlpha = OPACIDAD_MAPA; g.drawImage(mc, ox, oy); g.restore();
+    }
     g.save(); g.beginPath(); g.rect(ox, oy, interior, BH); g.clip();
-
     const centros = new Map();
     const etH = 22 * k;
     for (const t of estado.tarjetas) {
       const im = imgs.get(t.id);
-      const x = ox + t.x * interior, yy = oy + t.y * BH;
-      const w = t.w * interior, h = w * t.ar;
+      const x = ox + t.x * interior, yy = oy + t.y * BH, w = t.w * interior, h = w * t.ar;
       g.fillStyle = '#fff'; g.fillRect(x, yy, w, h + etH);
       if (im && im.naturalWidth) g.drawImage(im, x, yy, w, h);
       g.fillStyle = '#141414'; g.fillRect(x, yy + h, w, etH);
@@ -321,68 +474,87 @@
         let s = t.label; while (s && g.measureText(s).width > w - 12 * k) s = s.slice(0, -1);
         g.fillText(s, x + 6 * k, yy + h + etH / 2); g.textBaseline = 'top';
       }
-      g.lineWidth = 1.5; g.strokeStyle = '#141414'; g.strokeRect(x, yy, w, h + etH);
+      g.lineWidth = 1.5 * S; g.strokeStyle = '#141414'; g.strokeRect(x, yy, w, h + etH);
       centros.set(t.id, { x: x + w / 2, y: yy + h / 2 });
     }
-    const usados = new Map();
+    for (const p of estado.puntos) centros.set(p.id, { x: ox + p.x * interior, y: oy + p.y * BH, imaginario: true });
+
+    const gw = GROSORES[e.grosor] * k;
+    const dash = TRAZOS[e.trazo] ? TRAZOS[e.trazo].split(' ').map((n) => Number(n) * k) : [];
+    g.lineCap = 'round';
+    const extremos = new Map();
     for (const [a, b] of estado.lineas) {
       const p = centros.get(a), q = centros.get(b);
       if (!p || !q) continue;
-      usados.set(a, p); usados.set(b, q);
-      g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 3.4 * k;
+      if (!p.imaginario) extremos.set(a, p);
+      if (!q.imaginario) extremos.set(b, q);
+      g.setLineDash(dash);
+      g.strokeStyle = e.color === '#ffffff' ? 'rgba(20,20,20,.55)' : 'rgba(255,255,255,.85)'; g.lineWidth = gw + 2.2 * k;
       g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); g.stroke();
-      g.strokeStyle = '#141414'; g.lineWidth = 1.4 * k;
+      g.strokeStyle = e.color; g.lineWidth = gw;
       g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); g.stroke();
     }
-    for (const p of usados.values()) {
-      g.beginPath(); g.arc(p.x, p.y, 4.5 * k, 0, Math.PI * 2);
-      g.fillStyle = '#141414'; g.fill(); g.lineWidth = 1.5 * k; g.strokeStyle = '#fff'; g.stroke();
+    g.setLineDash([]);
+    for (const p of extremos.values()) {
+      g.beginPath(); g.arc(p.x, p.y, (3 + GROSORES[e.grosor]) * k, 0, Math.PI * 2);
+      g.fillStyle = e.color; g.fill(); g.lineWidth = 1.5 * k; g.strokeStyle = e.color === '#ffffff' ? '#141414' : '#fff'; g.stroke();
+    }
+    for (const p of estado.puntos) {
+      g.beginPath(); g.arc(ox + p.x * interior, oy + p.y * BH, 7 * k, 0, Math.PI * 2);
+      g.fillStyle = '#fff'; g.fill(); g.lineWidth = 1.6 * k; g.strokeStyle = e.color === '#ffffff' ? '#141414' : e.color; g.stroke();
     }
     g.restore();
-    y = oy + BH + 56;
+    g.lineWidth = 1.5 * S; g.strokeStyle = '#141414'; g.strokeRect(ox + 0.5, oy + 0.5, interior - 1, BH - 1);
+    if (conMapa && estado.zona) {
+      g.font = `${11 * S}px sans-serif`; g.fillStyle = '#8a8984'; g.textAlign = 'right';
+      g.fillText(ATRIB, ox + interior - 8 * S, oy + BH - 18 * S); g.textAlign = 'left';
+    }
+    y = oy + BH + 56 * S;
 
     // textos
-    g.fillStyle = '#141414';
-    g.font = `40px ${FUENTE}`;
-    for (const l of tit) { g.fillText(l, P, y); y += 50; }
-    y += 24;
-    g.font = `22px ${FUENTE}`; g.fillStyle = '#6f6f6c'; g.fillText(`${M.narrativa}:/<`, P, y); y += 30;
-    g.font = `24px ${FUENTE}`; g.fillStyle = '#141414';
-    for (const l of narr) { g.fillText(l, P, y); y += 36; }
-    y += 24;
-    if (v.ubicacion) {
-      g.font = `22px ${FUENTE}`; g.fillStyle = '#6f6f6c'; g.fillText('ubicación:/<', P, y); y += 30;
-      g.fillStyle = '#141414'; g.fillText(v.ubicacion, P, y); y += 40;
+    g.fillStyle = '#141414'; g.font = `${40 * S}px ${FUENTE}`;
+    for (const l of tit) { g.fillText(l, P, y); y += 50 * S; }
+    y += 24 * S;
+    g.font = `${22 * S}px ${FUENTE}`; g.fillStyle = '#6f6f6c'; g.fillText(`${M.narrativa}:/<`, P, y); y += 30 * S;
+    g.font = `${24 * S}px ${FUENTE}`; g.fillStyle = '#141414';
+    for (const l of narr) { g.fillText(l, P, y); y += 36 * S; }
+    y += 24 * S;
+    if (estado.zona) {
+      g.font = `${22 * S}px ${FUENTE}`; g.fillStyle = '#6f6f6c'; g.fillText('ubicación:/<', P, y); y += 30 * S;
+      g.fillStyle = '#141414'; g.fillText(ubicacionTexto(), P, y); y += 40 * S;
     }
-    y += 20;
-    g.fillStyle = '#141414'; g.fillRect(P, y, interior, 1.5); y += 40;
-    g.font = `20px ${FUENTE}`; g.fillStyle = '#141414';
-    g.fillText([v.alias || 'anónimo', v.ciudad, fecha].filter(Boolean).join(' · '), P, y); y += 26;
+    y += 20 * S;
+    g.fillStyle = '#141414'; g.fillRect(P, y, interior, 1.5 * S); y += 40 * S;
+    g.font = `${20 * S}px ${FUENTE}`;
+    g.fillText([v.alias || 'anónimo', v.ciudad, fecha].filter(Boolean).join(' · '), P, y); y += 26 * S;
     g.fillStyle = '#6f6f6c';
-    g.fillText(`${LICENCIA} · máquinas_ · ${M.credito}`, P, y);
+    g.fillText(`${LICENCIA} · máquinas_ · ${M.credito}`, P, y); y += 26 * S;
+    if (estado.zona) g.fillText(`mapa ${ATRIB}`, P, y);
     return c;
   }
 
-  function aviso(txt, error = false) { mensaje.textContent = txt; mensaje.classList.toggle('error', error); }
-
-  function validar() {
-    if (!estado.tarjetas.length) return 'sube al menos una foto al tablero.';
-    if (!campos.titulo.value.trim()) return 'falta el título.';
-    if (!campos.narrativa.value.trim()) return `falta el ${M.narrativa}.`;
-    return null;
+  // si el mapa no permite exportarse, se compone sin él
+  async function componerSeguro(S, tipo, calidad) {
+    try { return (await componer(S, true)).toDataURL(tipo, calidad); }
+    catch { return (await componer(S, false)).toDataURL(tipo, calidad); }
   }
 
+  let temporizador = null;
+  function programarVista() { clearTimeout(temporizador); temporizador = setTimeout(actualizarVista, 500); }
+  async function actualizarVista() {
+    $('#vista-estado').textContent = 'componiendo pieza_';
+    $('#vista').src = await componerSeguro(1, 'image/jpeg', 0.85);
+    $('#vista-estado').textContent = '';
+  }
+
+  function avisoFinal(txt, error = false) { mensaje.textContent = txt; mensaje.classList.toggle('error', error); }
+  const nombreArchivo = () => `${M.id}_${(campos.titulo.value.trim() || 'pieza').replace(/[^\p{L}\p{N}]+/gu, '_').toLowerCase()}`;
+
   $('#exportar').addEventListener('click', async () => {
-    const err = validar(); if (err) return aviso(err, true);
-    aviso('componiendo pieza_');
-    const c = await componer();
-    c.toBlob((blob) => {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `${ID}_${(campos.titulo.value.trim() || 'pieza').replace(/[^\p{L}\p{N}]+/gu, '_').toLowerCase()}.png`;
-      a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-      aviso('png descargado_');
-    }, 'image/png');
+    avisoFinal('componiendo pieza en alta resolución_');
+    const url = await componerSeguro(2, 'image/png');
+    const a = document.createElement('a'); a.href = url; a.download = `${nombreArchivo()}.png`; a.click();
+    avisoFinal('png descargado_');
   });
 
   // ── enviar ────────────────────────────────────────────────────────────
@@ -393,39 +565,40 @@
     s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit';
     s.async = true; document.head.appendChild(s);
   }
-
-  form.addEventListener('submit', async (e) => {
+  $('#formulario').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const err = validar(); if (err) return aviso(err, true);
-    if (!$('#f-consent').checked) return aviso('para enviar, marca la casilla de licencia.', true);
-    if (!CFG.WORKER_URL) return aviso('los envíos aún no están activos. puedes descargar tu png mientras tanto.', true);
+    for (const p of [1, 2, 3, 4]) { const err = validar(p); if (err) return avisoFinal(err, true); }
+    if (!$('#f-consent').checked) return avisoFinal('para enviar, marca la casilla de licencia.', true);
+    if (!CFG.WORKER_URL) return avisoFinal('los envíos aún no están activos. puedes descargar tu png.', true);
     let token = '';
     if (CFG.TURNSTILE_SITEKEY) {
       token = window.turnstile && widget !== null ? window.turnstile.getResponse(widget) : '';
-      if (!token) return aviso('espera a que termine la verificación de abajo.', true);
+      if (!token) return avisoFinal('espera a que termine la verificación de arriba.', true);
     }
     const boton = $('#enviar'); boton.disabled = true;
-    aviso('componiendo y enviando pieza_');
+    avisoFinal('componiendo y enviando tu pieza_');
     try {
-      const c = await componer();
-      const png = c.toDataURL('image/png');
-      const v = Object.fromEntries(Object.entries(campos).map(([k, el]) => [k, el.value.trim()]));
+      const imagen = await componerSeguro(2, 'image/jpeg', 0.9);
+      const v = Object.fromEntries(Object.entries(campos).map(([kk, el]) => [kk, el.value.trim()]));
       const cuerpo = {
-        maquina: ID, ...v, licencia: LICENCIA, consentimiento: true,
-        website: form.website.value, turnstile: token, png,
+        maquina: M.id, ...v, ubicacion: ubicacionTexto(), licencia: LICENCIA, consentimiento: true,
+        website: e.target.website.value, turnstile: token, imagen,
         tablero: {
           aspecto: +(tablero.clientHeight / tablero.clientWidth).toFixed(4),
-          tarjetas: estado.tarjetas.map(({ id, x, y, w, ar, label }) => ({ id, x: +x.toFixed(4), y: +y.toFixed(4), w, ar: +ar.toFixed(4), label })),
+          zona: estado.zona && { lat: redondear(estado.zona.lat), lng: redondear(estado.zona.lng), zoom: estado.zona.zoom },
+          estilo: estado.estilo,
+          tarjetas: estado.tarjetas.map(({ id, x, y, w, ar, label, coords }) => ({ id, x: +x.toFixed(4), y: +y.toFixed(4), w, ar: +ar.toFixed(4), label, coords })),
+          puntos: estado.puntos.map(({ id, x, y }) => ({ id, x: +x.toFixed(4), y: +y.toFixed(4) })),
           lineas: estado.lineas,
         },
       };
       const r = await fetch(CFG.WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
       const res = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(res.error || `error ${r.status}`);
-      aviso('envío recibido_ gracias. tu pieza aparecerá en la galería cuando sea aprobada.');
+      avisoFinal('envío recibido_ gracias. tu pieza aparecerá en la galería cuando sea aprobada.');
       $('#f-consent').checked = false;
     } catch (ex) {
-      aviso(`no se pudo enviar: ${ex.message}. intenta de nuevo.`, true);
+      avisoFinal(`no se pudo enviar: ${ex.message}. intenta de nuevo.`, true);
     } finally {
       boton.disabled = false;
       if (widget !== null && window.turnstile) window.turnstile.reset(widget);
@@ -434,5 +607,5 @@
 
   // ── inicio ────────────────────────────────────────────────────────────
   recuperar();
-  cambiarModo('mover');
+  irA(estado.paso || 1);
 })();

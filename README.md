@@ -7,7 +7,7 @@ Las personas **no necesitan cuenta de GitHub**.
 ```
 index.html                  inicio con las seis carpetas
 constelaciones_urbanas.html instructivo
-tablero.html                tablero (?maquina=constelaciones_urbanas)
+tablero.html                asistente de 5 pasos: zona (mapa) → luces → constelación → mito → enviar
 galeria.html                piezas aprobadas
 config.js                   ← aquí pegas la URL del Worker y la clave de Turnstile
 assets/                     estilos, script del tablero, fotos de la expo
@@ -68,6 +68,12 @@ Commit → el sitio se vuelve a publicar solo.
 Abre el tablero, sube 2–3 fotos, conéctalas, llena título y mito, marca la licencia y envía. En **Pull requests** de tu repositorio debe aparecer `envío: constelaciones_urbanas — …`.
 
 ---
+
+## Mapa
+El mapa usa CARTO Positron (datos de OpenStreetMap) con Leaflet. Es gratuito y sin clave; el crédito «© OpenStreetMap © CARTO» aparece en el tablero y en cada pieza.
+
+## Actualizar el Worker
+Cada vez que cambie `worker/worker.js`, vuelve a pegarlo en Cloudflare: **Workers & Pages → maquinas-envios → Edit code → pegar → Deploy**. Las variables no se tocan.
 
 ## Moderar envíos
 - Te llega aviso de GitHub (correo o app de GitHub en el celular).

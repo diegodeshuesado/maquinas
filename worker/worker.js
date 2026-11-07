@@ -62,16 +62,19 @@ export default {
       campos[k] = val;
     }
     if (!campos.titulo || !campos.narrativa) return responder({ error: 'faltan título o narrativa' }, 400);
-    const prefijo = 'data:image/png;base64,';
-    if (typeof b.png !== 'string' || !b.png.startsWith(prefijo)) return responder({ error: 'falta la imagen' }, 400);
-    const pngB64 = b.png.slice(prefijo.length);
-    if (pngB64.length * 0.75 > MAX_PNG_BYTES) return responder({ error: 'la imagen es demasiado pesada' }, 413);
-    if (!/^[A-Za-z0-9+/]+=*$/.test(pngB64)) return responder({ error: 'imagen inválida' }, 400);
+    // la imagen llega como data URL en JPG (actual) o PNG (versión anterior del tablero)
+    const dataUrl = typeof b.imagen === 'string' ? b.imagen : b.png;
+    const m = typeof dataUrl === 'string' && dataUrl.match(/^data:image\/(jpeg|png);base64,/);
+    if (!m) return responder({ error: 'falta la imagen' }, 400);
+    const ext = m[1] === 'jpeg' ? 'jpg' : 'png';
+    const imgB64 = dataUrl.slice(m[0].length);
+    if (imgB64.length * 0.75 > MAX_PNG_BYTES) return responder({ error: 'la imagen es demasiado pesada' }, 413);
+    if (!/^[A-Za-z0-9+/]+=*$/.test(imgB64)) return responder({ error: 'imagen inválida' }, 400);
 
     const fecha = new Date().toISOString();
     const id = `${fecha.slice(0, 10)}_${b.maquina}_${crypto.randomUUID().slice(0, 8)}`;
     const datos = {
-      id, maquina: b.maquina, ...campos, fecha: fecha.slice(0, 10), licencia: 'CC BY-NC-SA 4.0',
+      id, maquina: b.maquina, ...campos, imagen: `pieza.${ext}`, fecha: fecha.slice(0, 10), licencia: 'CC BY-NC-SA 4.0',
       tablero: b.tablero && typeof b.tablero === 'object' ? b.tablero : null,
     };
 
@@ -82,11 +85,11 @@ export default {
     try {
       const ref = await gh('GET', `/git/ref/heads/${base}`);
       await gh('POST', '/git/refs', { ref: `refs/heads/${rama}`, sha: ref.object.sha });
-      await gh('PUT', `/contents/envios/${id}/pieza.png`, { message: `envío ${id}: imagen`, content: pngB64, branch: rama });
+      await gh('PUT', `/contents/envios/${id}/pieza.${ext}`, { message: `envío ${id}: imagen`, content: imgB64, branch: rama });
       await gh('PUT', `/contents/envios/${id}/datos.json`, {
         message: `envío ${id}: datos`, content: base64Utf8(JSON.stringify(datos, null, 2) + '\n'), branch: rama,
       });
-      const imgUrl = `https://raw.githubusercontent.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/refs/heads/${rama}/envios/${id}/pieza.png`;
+      const imgUrl = `https://raw.githubusercontent.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/refs/heads/${rama}/envios/${id}/pieza.${ext}`;
       await gh('POST', '/pulls', {
         title: `envío: ${b.maquina} — ${campos.titulo}${campos.alias ? ` (${campos.alias})` : ''}`,
         head: rama, base,

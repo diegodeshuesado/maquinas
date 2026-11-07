@@ -8,11 +8,15 @@ for (const ent of await readdir(dir, { withFileTypes: true })) {
   if (!ent.isDirectory()) continue;
   const base = join(dir, ent.name);
   try {
-    await access(join(base, 'pieza.png'));
     const d = JSON.parse(await readFile(join(base, 'datos.json'), 'utf8'));
+    let archivo = null;
+    for (const nombre of [d.imagen, 'pieza.jpg', 'pieza.png'].filter(Boolean)) {
+      try { await access(join(base, nombre)); archivo = nombre; break; } catch {}
+    }
+    if (!archivo) throw new Error('sin imagen');
     piezas.push({
       id: d.id || ent.name, maquina: d.maquina, titulo: d.titulo, alias: d.alias || '',
-      ciudad: d.ciudad || '', fecha: d.fecha || '', imagen: `${base}/pieza.png`,
+      ciudad: d.ciudad || '', fecha: d.fecha || '', imagen: `${base}/${archivo}`,
     });
   } catch (e) {
     console.warn(`omitido ${base}: ${e.message}`);
