@@ -623,8 +623,27 @@
           lineas: estado.lineas,
         },
       };
-      const r = await fetch(CFG.WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
-      const res = await r.json().catch(() => ({}));
+      const mandar = (c) => fetch(CFG.WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) });
+      let r = await mandar(cuerpo);
+      let res = await r.json().catch(() => ({}));
+      // compatibilidad: un Worker anterior solo acepta PNG en el campo «png»
+      if (!r.ok && res.error === 'falta la imagen') {
+        const { imagen: _, ...resto } = cuerpo;
+        let png = await componerSeguro(2, 'image/png');
+        if (png.length * 0.75 > 7.5e6) png = await componerSeguro(1.4, 'image/png');
+        if (CFG.TURNSTILE_SITEKEY && widget !== null && window.turnstile) {
+          window.turnstile.reset(widget);
+          resto.turnstile = await new Promise((ok) => {
+            const t0 = Date.now();
+            const espera = setInterval(() => {
+              const tk = window.turnstile.getResponse(widget);
+              if (tk || Date.now() - t0 > 15000) { clearInterval(espera); ok(tk || ''); }
+            }, 300);
+          });
+        }
+        r = await mandar({ ...resto, png });
+        res = await r.json().catch(() => ({}));
+      }
       if (!r.ok) throw new Error(res.error || `error ${r.status}`);
       avisoFinal('envío recibido_ gracias. tu pieza aparecerá en la galería cuando sea aprobada.');
       $('#f-consent').checked = false;
