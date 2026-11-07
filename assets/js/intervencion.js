@@ -150,7 +150,7 @@
     Object.entries({
       action: 'query', format: 'json', formatversion: '2', origin: '*', generator: 'search',
       gsrsearch: `${q} filetype:bitmap`, gsrnamespace: '6', gsrlimit: String(limite),
-      prop: 'imageinfo', iiprop: 'url|extmetadata|mime', iiurlwidth: '1400',
+      prop: 'imageinfo', iiprop: 'url|extmetadata|mime', iiurlwidth: '1280',
       iiextmetadatafilter: 'Artist|LicenseShortName|LicenseUrl',
     }).forEach(([k, v]) => u.searchParams.set(k, v));
     const r = await fetch(u.toString()); if (!r.ok) throw new Error('commons');
@@ -178,7 +178,7 @@
     caja.innerHTML = '';
     lista.forEach((r) => {
       const b = document.createElement('button'); b.className = 'mini-libre'; b.type = 'button';
-      const im = document.createElement('img'); im.src = r.url.replace(/\/\d+px-/, '/320px-'); im.alt = r.etiqueta || r.titulo; im.loading = 'lazy';
+      const im = document.createElement('img'); im.src = r.url.replace(/\/\d+px-/, '/330px-'); im.alt = r.etiqueta || r.titulo; im.loading = 'lazy';
       b.appendChild(im);
       if (r.etiqueta) { const s = document.createElement('span'); s.textContent = r.etiqueta; b.appendChild(s); }
       b.addEventListener('click', () => usarCommons(r));
