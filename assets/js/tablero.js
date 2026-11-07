@@ -73,18 +73,47 @@
   const nodos = () => [...estado.tarjetas, ...estado.puntos];
 
   // ── guardar / recuperar (solo en este navegador) ──────────────────────
+  // los textos y posiciones van en localStorage; las fotos, que pesan más, en IndexedDB
+  const fotosDB = (() => {
+    let abierta = null;
+    const abrir = () => abierta || (abierta = new Promise((ok, mal) => {
+      const r = indexedDB.open('maquinas', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('fotos');
+      r.onsuccess = () => ok(r.result);
+      r.onerror = () => mal(r.error);
+    }));
+    const usar = async (modo, fn) => {
+      const db = await abrir();
+      return new Promise((ok, mal) => {
+        const t = db.transaction('fotos', modo), req = fn(t.objectStore('fotos'));
+        t.oncomplete = () => ok(req && req.result);
+        t.onerror = () => mal(t.error);
+      });
+    };
+    return {
+      poner: (id, src) => usar('readwrite', (s) => s.put(src, id)).catch(() => {}),
+      leer: (id) => usar('readonly', (s) => s.get(id)).catch(() => null),
+      quitar: (id) => usar('readwrite', (s) => s.delete(id)).catch(() => {}),
+    };
+  })();
+
   function guardar() {
     if (aviso) aviso.textContent = '';
     Object.entries(campos).forEach(([k, el]) => { estado.campos[k] = el.value; });
-    try { localStorage.setItem(CLAVE, JSON.stringify(estado)); }
-    catch { try { localStorage.setItem(CLAVE, JSON.stringify({ ...estado, tarjetas: [], lineas: [] })); } catch {} }
+    const ligero = { ...estado, tarjetas: estado.tarjetas.map(({ src, ...resto }) => resto) };
+    try { localStorage.setItem(CLAVE, JSON.stringify(ligero)); } catch {}
   }
-  function recuperar() {
+  async function recuperar() {
     try {
       const d = JSON.parse(localStorage.getItem(CLAVE) || 'null');
       if (d) estado = { ...estado, ...d, estilo: { ...estado.estilo, ...(d.estilo || {}) }, campos: { ...estado.campos, ...(d.campos || {}) } };
     } catch {}
     Object.entries(campos).forEach(([k, el]) => { el.value = estado.campos[k] || ''; });
+    for (const t of estado.tarjetas) {
+      if (t.src) fotosDB.poner(t.id, t.src); // datos de una versión anterior
+      else t.src = await fotosDB.leer(t.id);
+    }
+    estado.tarjetas = estado.tarjetas.filter((t) => t.src);
   }
 
   // ── mapa (paso 1) ─────────────────────────────────────────────────────
@@ -227,8 +256,10 @@
         const filas = Math.max(1, Math.floor(0.94 / (altoFrac + 0.04)));
         const col = n % cols, fila = Math.floor(n / cols) % filas;
         const jitter = ((n * 37) % 7) / 100;
+        const id = uid();
+        await fotosDB.poner(id, src);
         estado.tarjetas.push({
-          id: uid(), src, ar, w, label: '', coords,
+          id, src, ar, w, label: '', coords,
           x: Math.min(0.03 + col * (0.94 / cols) + jitter / 2, 1 - w),
           y: Math.min(0.03 + fila * (altoFrac + 0.05) + jitter, Math.max(0, 1 - altoFrac)),
         });
@@ -244,7 +275,7 @@
     vacio.style.display = estado.tarjetas.length || estado.puntos.length ? 'none' : '';
     const { W } = dims();
     const editable = estado.paso >= 2 && estado.paso <= 4;
-    for (const t of estado.tarjetas) {
+    for (const t of estado.tarjetas.filter((x) => x.src)) {
       const el = document.createElement('div');
       el.className = 'tarjeta nodo' + (elegida === t.id ? ' elegida' : '');
       el.dataset.id = t.id;
@@ -259,7 +290,7 @@
       inp.addEventListener('pointerdown', (ev) => { if (!inp.readOnly) ev.stopPropagation(); });
       el.append(img, inp);
       tablero.appendChild(el);
-      if (!imgs.has(t.id)) { const im = new Image(); im.src = t.src; imgs.set(t.id, im); }
+      if (t.src && (!imgs.has(t.id) || imgs.get(t.id).src !== t.src)) { const im = new Image(); im.src = t.src; imgs.set(t.id, im); }
     }
     for (const p of estado.puntos) {
       const el = document.createElement('div');
@@ -343,7 +374,7 @@
     if (modo === 'borrar') {
       estado.tarjetas = estado.tarjetas.filter((x) => x.id !== id);
       estado.puntos = estado.puntos.filter((x) => x.id !== id);
-      imgs.delete(id); pintar(); guardar(); return;
+      imgs.delete(id); fotosDB.quitar(id); pintar(); guardar(); return;
     }
     if (modo === 'conectar') {
       if (!elegida) { elegida = id; pintar(); return; }
@@ -449,13 +480,17 @@
     return out;
   }
   async function esperarImagenes() {
-    await Promise.all(estado.tarjetas.map((t) => {
+    await Promise.all(estado.tarjetas.filter((t) => t.src).map((t) => {
       let im = imgs.get(t.id);
-      if (!im) { im = new Image(); im.src = t.src; imgs.set(t.id, im); }
-      return im.complete && im.naturalWidth ? null : new Promise((ok) => { im.onload = im.onerror = ok; });
+      if (!im || im.src !== t.src || (im.complete && !im.naturalWidth)) { im = new Image(); im.src = t.src; imgs.set(t.id, im); }
+      if (im.complete) return null;
+      return new Promise((ok) => {
+        im.addEventListener('load', ok, { once: true });
+        im.addEventListener('error', ok, { once: true });
+        setTimeout(ok, 8000);
+      });
     }));
   }
-
   async function componer(S = 2, conMapa = true) {
     try { await document.fonts.load(`20px "Share Tech Mono"`); } catch {}
     await esperarImagenes();
@@ -607,13 +642,15 @@
       if (!token) return avisoFinal('espera a que termine la verificación de arriba.', true);
     }
     const boton = $('#enviar'); boton.disabled = true;
-    avisoFinal('componiendo y enviando tu pieza_');
+    const noCerrar = (ev) => { ev.preventDefault(); ev.returnValue = ''; };
+    window.addEventListener('beforeunload', noCerrar);
+    const workerAnterior = (() => { try { return localStorage.getItem('maquinas_worker_png') === '1'; } catch { return false; } })();
+    avisoFinal('1/2 · preparando tu pieza_ no cierres esta página.');
     try {
-      const imagen = await componerSeguro(2, 'image/jpeg', 0.9);
       const v = Object.fromEntries(Object.entries(campos).map(([kk, el]) => [kk, el.value.trim()]));
       const cuerpo = {
         maquina: M.id, ...v, ubicacion: ubicacionTexto(), licencia: LICENCIA, consentimiento: true,
-        website: e.target.website.value, turnstile: token, imagen,
+        website: e.target.website.value, turnstile: token,
         tablero: {
           aspecto: +(tablero.clientHeight / tablero.clientWidth).toFixed(4),
           zona: estado.zona && { lat: redondear(estado.zona.lat), lng: redondear(estado.zona.lng), zoom: estado.zona.zoom },
@@ -624,32 +661,48 @@
         },
       };
       const mandar = (c) => fetch(CFG.WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) });
-      let r = await mandar(cuerpo);
-      let res = await r.json().catch(() => ({}));
+      const comoPng = async () => {
+        let png = await componerSeguro(1.5, 'image/png');
+        if (png.length * 0.75 > 7.5e6) png = await componerSeguro(1, 'image/png');
+        return png;
+      };
+      let r, res;
+      if (workerAnterior) {
+        const png = await comoPng();
+        avisoFinal('2/2 · subiendo tu pieza_ puede tardar un poco con datos móviles.');
+        r = await mandar({ ...cuerpo, png });
+      } else {
+        const imagen = await componerSeguro(2, 'image/jpeg', 0.9);
+        avisoFinal('2/2 · subiendo tu pieza_ puede tardar un poco con datos móviles.');
+        r = await mandar({ ...cuerpo, imagen });
+      }
+      res = await r.json().catch(() => ({}));
       // compatibilidad: un Worker anterior solo acepta PNG en el campo «png»
-      if (!r.ok && res.error === 'falta la imagen') {
-        const { imagen: _, ...resto } = cuerpo;
-        let png = await componerSeguro(2, 'image/png');
-        if (png.length * 0.75 > 7.5e6) png = await componerSeguro(1.4, 'image/png');
+      if (!r.ok && res.error === 'falta la imagen' && !workerAnterior) {
+        try { localStorage.setItem('maquinas_worker_png', '1'); } catch {}
+        avisoFinal('ajustando el formato_ se envía de nuevo en un momento.');
+        const png = await comoPng();
         if (CFG.TURNSTILE_SITEKEY && widget !== null && window.turnstile) {
           window.turnstile.reset(widget);
-          resto.turnstile = await new Promise((ok) => {
+          cuerpo.turnstile = await new Promise((ok) => {
             const t0 = Date.now();
             const espera = setInterval(() => {
               const tk = window.turnstile.getResponse(widget);
-              if (tk || Date.now() - t0 > 15000) { clearInterval(espera); ok(tk || ''); }
+              if (tk || Date.now() - t0 > 20000) { clearInterval(espera); ok(tk || ''); }
             }, 300);
           });
         }
-        r = await mandar({ ...resto, png });
+        r = await mandar({ ...cuerpo, png });
         res = await r.json().catch(() => ({}));
       }
+      if (r.ok) { try { if (res.ok && !workerAnterior) localStorage.removeItem('maquinas_worker_png'); } catch {} }
       if (!r.ok) throw new Error(res.error || `error ${r.status}`);
       avisoFinal('envío recibido_ gracias. tu pieza aparecerá en la galería cuando sea aprobada.');
       $('#f-consent').checked = false;
     } catch (ex) {
-      avisoFinal(`no se pudo enviar: ${ex.message}. intenta de nuevo.`, true);
+      avisoFinal(`no se pudo enviar: ${ex.message}. tu pieza sigue aquí; intenta de nuevo.`, true);
     } finally {
+      window.removeEventListener('beforeunload', noCerrar);
       boton.disabled = false;
       if (widget !== null && window.turnstile) window.turnstile.reset(widget);
     }
@@ -658,6 +711,5 @@
   // ── inicio ────────────────────────────────────────────────────────────
   document.body.classList.toggle('mapa-gris', GRISES);
   $$('.atrib').forEach((el) => { el.textContent = ATRIB; });
-  recuperar();
-  irA(estado.paso || 1);
+  recuperar().then(() => irA(estado.paso || 1));
 })();
