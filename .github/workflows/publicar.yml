@@ -36,6 +36,11 @@ jobs:
           python scripts/miniaturas.py
       - name: índice de la galería
         run: node scripts/indice.mjs
+      - name: sello de versión (evita que los navegadores se queden con copias viejas)
+        run: |
+          V="${GITHUB_SHA::7}"
+          sed -i "s/__VERSION__/$V/g" *.html
+          echo "$V" > version.txt
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

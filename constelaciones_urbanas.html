@@ -3,11 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="version" content="__VERSION__">
+<script>
+/* si hay una versión más nueva publicada, recarga una vez para no quedarse con la copia vieja del navegador */
+(function () {
+  var v = document.querySelector('meta[name=version]').content;
+  if (v.indexOf('__') === 0 || !window.fetch) return;
+  fetch('version.txt?' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.text() : ''; })
+    .then(function (t) {
+      t = t.trim();
+      try { if (!t || t === v || sessionStorage.getItem('maquinas_recarga') === t) return; sessionStorage.setItem('maquinas_recarga', t); } catch (e) { return; }
+      var u = new URL(location.href); u.searchParams.set('v', t); location.replace(u.toString());
+    })
+    .catch(function () {});
+})();
+</script>
+
 <title>constelaciones_urbanas · máquinas_</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20261106g">
+<link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
 </head>
 <body>
 <div class="envoltura">
