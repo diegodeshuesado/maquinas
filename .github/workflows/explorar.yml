@@ -6,22 +6,15 @@ jobs:
   ver:
     runs-on: ubuntu-latest
     steps:
-      - name: nueva metodologia
-        run: |
-          curl -sSL -A "Mozilla/5.0" "https://www.gob.mx/sesnsp/articulos/nueva-metodologia-para-el-registro-y-clasificacion-de-los-delitos-y-las-victimas-para-fines-estadisticos?state=published" -o n.html; ls -la n.html
-          grep -oE 'href="[^"]+"[^>]*>[^<]{0,160}' n.html | grep -iE 'sharepoint|drive|csv|zip|xls|onedrive' | head -40
-          curl -sSL -A "Mozilla/5.0" "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva" -o p.html
-          grep -oE 'href="[^"]+"[^>]*>[^<]{0,160}' p.html | grep -iE 'sharepoint' | head -40
-      - name: probar descarga sharepoint
+      - name: sharepoint
         continue-on-error: true
         run: |
-          for u in $(grep -oE 'https://sspcgob-my.sharepoint.com/[^"]+' n.html p.html | cut -d: -f2- | sort -u | head -12); do
-            u=$(echo "$u" | sed 's/&amp;/\&/g'); d="$u&download=1"
-            code=$(curl -sSL -A "Mozilla/5.0" -o f.bin -w "%{http_code} %{content_type} %{size_download}" "$d")
-            echo "== $u"; echo "   $code"; file f.bin | cut -c1-120; head -c 300 f.bin | tr -d '\0' | head -3; echo
-          done
-      - name: otras
-        continue-on-error: true
-        run: |
-          for u in https://versionpublica.cnb.gob.mx/ https://gabinetedeseguridad.gob.mx/homicidios/ https://www.datos.gob.mx/api/3/action/package_search?q=incidencia+delictiva https://datos.gob.mx/api/3/action/package_search?q=victimas ; do
-            echo "== $u"; curl -sSL -A "Mozilla/5.0" -o o.html -w "%{http_code} %{content_type}\n" "$u" || true; head -c 600 o.html; echo; done
+          T=IQB62zi8YeCOR5sJgXLRXNoTAc0815g0LPL0OhuUPy9Z_ec
+          U="https://sspcgob-my.sharepoint.com/:u:/g/personal/cni_sspc_gob_mx/$T?e=8lbU4f"
+          curl -sSL -c c.txt -b c.txt -A "Mozilla/5.0" -o a.html -w "share %{http_code} %{url_effective}\n" "$U"
+          grep -oE '"(downloadUrl|\.downloadUrl|FileUrlNoAuth|fileUrl|serverRedirectedUrl)"\s*:\s*"[^"]{0,300}' a.html | head -5
+          grep -oE '<title>[^<]*' a.html; grep -oiE '(sign in|iniciar sesi|access denied|acceso)[^<]{0,80}' a.html | head -3
+          D="https://sspcgob-my.sharepoint.com/personal/cni_sspc_gob_mx/_layouts/15/download.aspx?share=$T"
+          curl -sSL -c c.txt -b c.txt -A "Mozilla/5.0" -o d.bin -w "download %{http_code} %{content_type} %{size_download} %{url_effective}\n" "$D"
+          file d.bin; unzip -l d.bin 2>/dev/null | head; head -c 200 d.bin | tr -d '\0'; echo
+          curl -sSL -A "Mozilla/5.0" -o e.bin -w "download sin cookie %{http_code} %{content_type} %{size_download}\n" "$D"; file e.bin
