@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="version" content="__VERSION__">
+<script>
+/* si hay una versión más nueva publicada, recarga una vez para no quedarse con la copia vieja del navegador */
+(function () {
+  function revisar() {
+  var v = document.querySelector('meta[name=version]').content;
+  if (v.indexOf('__') === 0 || !window.fetch) return;
+  fetch('version.txt?' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.text() : ''; })
+    .then(function (t) {
+      t = t.trim();
+      try { if (!t || t === v || sessionStorage.getItem('maquinas_recarga') === t) return; sessionStorage.setItem('maquinas_recarga', t); } catch (e) { return; }
+      var u = new URL(location.href); u.searchParams.set('v', t); location.replace(u.toString());
+    })
+    .catch(function () {});
+  }
+  revisar();
+  /* al regresar con «atrás», Safari muestra la página guardada sin volver a revisar */
+  window.addEventListener('pageshow', function (e) { if (e.persisted) revisar(); });
+})();
+</script>
+
+<title>anar_quitecturas · máquinas_</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Permanent+Marker&family=Sedgwick+Ave+Display&family=Special+Elite&family=Stardos+Stencil:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/css/style.css?v=__VERSION__">
+</head>
+<body data-maquina="anar_quitecturas">
+<div class="envoltura asistente">
+  <header class="cab">
+    <a class="marca-chica" href="./">máquinas_</a>
+    <a class="maq" href="anar_quitecturas.html">anar_quitecturas</a>
+  </header>
+  <div class="fila-progreso">
+    <button class="enlace" id="reiniciar" hidden>empezar de nuevo_</button>
+    <p class="progreso" id="progreso" aria-live="polite">■□□□□ 1/5</p>
+  </div>
+
+  <!-- 1 · imagen -->
+  <section class="paso" data-paso="1">
+    <h1 class="paso-t">elegir la imagen_</h1>
+    <p class="paso-d">fotografía un monumento, una fachada o un objeto que represente el poder, súbela desde tu galería, o elige una imagen libre.</p>
+    <div class="herramientas">
+      <label class="herr" for="camara">◉ cámara</label>
+      <input id="camara" class="entrada-base" type="file" accept="image/*" capture="environment" hidden>
+      <label class="herr" for="galeria">+ galería</label>
+      <input id="galeria" class="entrada-base" type="file" accept="image/*" hidden>
+    </div>
+    <div class="base-elegida" id="base-elegida" hidden>
+      <img id="base-vista" alt="imagen elegida">
+      <p class="ayuda" id="base-credito"></p>
+    </div>
+    <p class="etiqueta-chica">referentes libres_</p>
+    <div class="carrusel" id="carrusel" aria-label="imágenes libres de referencia"><span class="ayuda">cargando_</span></div>
+    <div class="buscador">
+      <input id="libre-q" type="search" placeholder="buscar imágenes libres: estatua, palacio, billete…" enterkeyhint="search">
+      <button class="herr" id="libre-buscar" type="button">buscar_</button>
+    </div>
+    <p class="ayuda" id="base-estado" aria-live="polite"></p>
+    <div class="libres" id="libres"></div>
+  </section>
+
+  <!-- 2 · intervenir -->
+  <section class="paso" data-paso="2" hidden>
+    <h1 class="paso-t">intervenir_</h1>
+    <p class="paso-d">raya, escribe y pega encima: como un grafiti, una pinta o un meme.</p>
+    <div id="editor">
+      <div class="herramientas">
+        <button class="herr" type="button" data-modo="trazo">trazo</button>
+        <button class="herr" type="button" data-modo="texto">texto</button>
+        <label class="herr" for="sticker">sticker +</label>
+        <input id="sticker" type="file" accept="image/*" hidden>
+        <button class="herr" type="button" data-modo="mover">mover</button>
+        <button class="herr" type="button" id="deshacer" aria-label="deshacer">↶</button>
+      </div>
+      <div class="panel-texto" id="panel-texto" hidden>
+        <input id="texto-nuevo" maxlength="80" placeholder="escribe tu frase" enterkeyhint="done">
+        <button class="herr" type="button" id="agregar-texto">agregar_</button>
+      </div>
+      <p class="ayuda" id="ayuda-editor"></p>
+      <div class="lienzo" id="lienzo">
+        <img id="base" alt="imagen a intervenir" draggable="false">
+        <canvas id="trazos"></canvas>
+        <div class="capas" id="capas"></div>
+        <div class="vacio-editor" id="vacio-editor">elige «trazo», «texto» o «sticker +»_</div>
+      </div>
+      <div class="ajustes" id="ajustes" hidden>
+        <label>tamaño <input type="range" id="ajuste-tam" min="5" max="100" value="40"></label>
+        <label>giro <input type="range" id="ajuste-giro" min="-180" max="180" value="0"></label>
+        <div class="fila-op">
+          <button class="herr chica" type="button" id="al-frente">al frente</button>
+          <button class="herr chica" type="button" id="eliminar">eliminar</button>
+        </div>
+      </div>
+      <div class="estilo-anar">
+        <div class="fila-op"><span class="estilo-et">color</span><span class="fila-op" id="colores"></span></div>
+        <div class="fila-op" id="fila-grosor" hidden>
+          <span class="estilo-et">pincel</span>
+          <button class="herr chica" type="button" data-pincel="plumon">plumón</button>
+          <button class="herr chica" type="button" data-pincel="aerosol">aerosol</button>
+        </div>
+        <div class="fila-op" id="fila-grosor2" hidden>
+          <span class="estilo-et">grosor</span>
+          <button class="herr chica" type="button" data-grosor="fino">fino</button>
+          <button class="herr chica" type="button" data-grosor="medio">medio</button>
+          <button class="herr chica" type="button" data-grosor="grueso">grueso</button>
+        </div>
+        <div class="fila-op" id="fila-letra" hidden>
+          <span class="estilo-et">letra</span>
+          <span class="fila-op" id="letras"></span>
+        </div>
+      </div>
+      <p style="margin-top:18px"><button class="enlace" type="button" id="borrar-todo">borrar toda la intervención_</button></p>
+    </div>
+  </section>
+
+  <!-- 3 · nombrar -->
+  <section class="paso" data-paso="3" hidden>
+    <h1 class="paso-t">nombrar_</h1>
+    <p class="paso-d">ponle título a tu intervención. si quieres, escribe una consigna.</p>
+    <div class="campos">
+      <div class="campo">
+        <label for="f-titulo">título:/&lt;</label>
+        <input id="f-titulo" maxlength="80" placeholder="nombre de tu intervención">
+      </div>
+      <div class="campo">
+        <label for="f-narrativa">consigna:/&lt; <span class="nota-in">(opcional)</span></label>
+        <textarea id="f-narrativa" maxlength="3000" placeholder="lo que dice, lo que grita, lo que pide…"></textarea>
+      </div>
+    </div>
+    <figure class="vista"><img id="vista-nombrar" alt="tu intervención"></figure>
+  </section>
+
+  <!-- 4 · ubicar -->
+  <section class="paso" data-paso="4" hidden>
+    <h1 class="paso-t">ubicar_ <span class="nota-in">(opcional)</span></h1>
+    <p class="paso-d">¿dónde está lo que interviniste? en la pieza solo aparece la coordenada; en la galería, tu intervención aparece en el mapa.</p>
+    <div class="marco mapa-marco">
+      <div id="mapa" aria-label="mapa para ubicar la intervención"></div>
+      <div class="mira" aria-hidden="true"></div>
+      <div class="fijado" id="fijado" hidden></div>
+    </div>
+    <div class="herramientas abajo">
+      <button class="herr" type="button" id="mi-ubicacion">◎ usar mi ubicación</button>
+      <button class="herr" type="button" id="fijar">fijar lugar</button>
+      <button class="enlace" type="button" id="saltar" style="padding:0 0 0 6px">saltar_ →</button>
+    </div>
+    <p class="ayuda" id="estado-zona"></p>
+  </section>
+
+  <!-- 5 · revisar y enviar -->
+  <section class="paso" data-paso="5" hidden>
+    <h1 class="paso-t">revisar y enviar_</h1>
+    <p class="paso-d">así se verá tu pieza.</p>
+    <div class="fila">
+      <div class="campo">
+        <label for="f-alias">nombre/alias:/&lt;</label>
+        <input id="f-alias" maxlength="60" placeholder="opcional">
+      </div>
+      <div class="campo">
+        <label for="f-ciudad">ciudad:/&lt;</label>
+        <input id="f-ciudad" maxlength="60" placeholder="opcional">
+      </div>
+    </div>
+    <figure class="vista">
+      <img id="vista" alt="vista previa de tu pieza">
+      <figcaption class="ayuda" id="vista-estado">componiendo pieza_</figcaption>
+    </figure>
+    <form id="formulario" autocomplete="off">
+      <div class="trampa" aria-hidden="true"><label>no llenar <input name="website" tabindex="-1" autocomplete="off"></label></div>
+      <label class="consent">
+        <input type="checkbox" id="f-consent">
+        <span>acepto publicar mi pieza en máquinas_ bajo la licencia
+        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
+        (crédito, sin uso comercial, compartir igual).</span>
+      </label>
+      <div id="turnstile"></div>
+      <div class="acciones">
+        <button type="button" class="herr" id="exportar">descargar png_</button>
+        <button type="submit" class="boton" id="enviar">enviar pieza_ →</button>
+      </div>
+      <p class="mensaje" id="mensaje" aria-live="polite"></p>
+    </form>
+    <div class="exito" id="exito" hidden>
+      <p class="paso-t" style="margin-top:8px">envío recibido_</p>
+      <p class="paso-d">gracias. tu intervención aparecerá en la galería cuando sea aprobada.</p>
+      <div class="acciones">
+        <button class="boton" id="nueva">nueva intervención_ →</button>
+        <a class="herr" href="galeria.html?maquina=anar_quitecturas" style="text-decoration:none">ver galería_</a>
+      </div>
+    </div>
+  </section>
+
+  <p class="mensaje error" id="aviso" aria-live="assertive"></p>
+  <nav class="pasos-nav">
+    <button class="herr" id="anterior">← anterior</button>
+    <button class="boton" id="siguiente">siguiente →</button>
+  </nav>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="config.js?v=__VERSION__"></script>
+<script src="assets/js/intervencion.js?v=__VERSION__"></script>
+</body>
+</html>

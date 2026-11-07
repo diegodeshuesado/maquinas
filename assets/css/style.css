@@ -12,6 +12,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
+[hidden] { display: none !important; }
 body {
   background: var(--muro);
   color: var(--tinta);
@@ -308,3 +309,51 @@ h2 { font-weight: 400; font-size: 22px; margin: 48px 0 16px; }
 .selector { margin-top: 10px; border-top: 1px dashed var(--linea); padding-top: 10px; }
 .selector select { font: inherit; font-size: 14px; border: 1px solid var(--linea); border-radius: 0; background: #fff; padding: 6px 8px; max-width: 100%; }
 .boton.chica { font-size: 13px; padding: 6px 12px; }
+
+/* anar_quitecturas */
+.etiqueta-chica { font-size: 14px; margin: 26px 0 8px; }
+.base-elegida { margin: 14px 0 6px; }
+.base-elegida img { max-height: 340px; width: auto; max-width: 100%; border: 1px solid var(--linea); }
+.base-elegida .ayuda { margin: 6px 0 0; }
+.carrusel { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+.mini-libre { flex: none; width: 112px; padding: 0; border: 1px solid var(--linea); background: var(--papel); cursor: pointer; font: inherit; color: var(--tinta); text-align: left; scroll-snap-align: start; }
+.mini-libre img { width: 100%; height: 84px; object-fit: cover; }
+.mini-libre span { display: block; font-size: 12px; padding: 4px 6px; border-top: 1px solid var(--linea); }
+.mini-libre:hover, .mini-libre:focus-visible { outline: 2px solid var(--tinta); outline-offset: 2px; }
+.buscador { display: flex; gap: 8px; margin: 18px 0 8px; }
+.buscador input { flex: 1; min-width: 0; font: inherit; font-size: 14px; border: 1px solid var(--linea); border-radius: 0; background: var(--papel); padding: 8px 10px; color: var(--tinta); }
+.libres { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.libres .mini-libre { width: auto; }
+.panel-texto { display: flex; gap: 8px; margin: 0 0 10px; }
+.panel-texto input { flex: 1; min-width: 0; font: inherit; font-size: 15px; border: 1px solid var(--linea); border-radius: 0; background: var(--papel); padding: 8px 10px; color: var(--tinta); }
+.lienzo { position: relative; width: 100%; border: 1px solid var(--linea); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; background: var(--papel); }
+.lienzo #base { width: 100%; height: 100%; object-fit: fill; pointer-events: none; -webkit-user-drag: none; }
+.lienzo #trazos { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.lienzo .capas { position: absolute; inset: 0; }
+.lienzo.modo-trazo { cursor: crosshair; }
+.lienzo.modo-trazo .obj { pointer-events: none; }
+.obj { position: absolute; cursor: grab; white-space: pre; line-height: 1; touch-action: none; }
+.obj.elegido { outline: 1.5px dashed var(--tinta); outline-offset: 4px; }
+.obj.texto { text-shadow: none; }
+.obj img { max-width: none; pointer-events: none; }
+.obj span { display: inline-block; padding: .06em .08em; margin-right: .04em; line-height: 1.1; }
+.vacio-editor { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); font-size: 12px; background: rgba(243,242,239,.88); padding: 4px 8px; pointer-events: none; white-space: nowrap; }
+.ajustes { display: grid; gap: 10px; margin: 14px 0 0; font-size: 14px; }
+.ajustes label { display: flex; align-items: center; gap: 12px; }
+.ajustes input[type=range] { flex: 1; accent-color: var(--tinta); }
+.estilo-anar { display: grid; gap: 12px; margin-top: 18px; font-size: 14px; }
+.estilo-et { width: 56px; flex: none; }
+.muestra-recorte { font-family: "Special Elite", monospace; }
+.muestra-recorte b { font-family: "Permanent Marker", cursive; font-weight: 400; background: var(--tinta); color: var(--muro); padding: 0 2px; }
+.muestra-recorte i { font-style: normal; font-family: "Stardos Stencil", sans-serif; background: #e3a83a; padding: 0 2px; }
+.herr.on .muestra-recorte b { background: var(--muro); color: var(--tinta); }
+.nota-in { font-size: 13px; color: var(--gris); }
+.mira { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; z-index: 600; pointer-events: none; }
+.mira::before, .mira::after { content: ""; position: absolute; background: var(--tinta); }
+.mira::before { left: 10px; top: 0; width: 2px; height: 22px; }
+.mira::after { top: 10px; left: 0; height: 2px; width: 22px; }
+/* galería: mapa de intervenciones */
+.vista-toggle { display: flex; gap: 8px; margin: 0 0 18px; }
+#mapa-galeria { width: 100%; aspect-ratio: 4 / 3; border: 1px solid var(--linea); }
+.marca-foto { width: 46px !important; height: 46px !important; margin: -23px 0 0 -23px !important; border: 1.5px solid var(--tinta); background: var(--papel); overflow: hidden; }
+.leaflet-container .leaflet-marker-pane .marca-foto img { width: 100% !important; height: 100% !important; object-fit: cover; object-position: 50% 32%; }

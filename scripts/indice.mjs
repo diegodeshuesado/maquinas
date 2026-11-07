@@ -15,11 +15,15 @@ for (const ent of await readdir(dir, { withFileTypes: true })) {
     }
     if (!archivo) throw new Error('sin imagen');
     const existe = async (n) => { try { await access(join(base, n)); return true; } catch { return false; } };
+    const t = d.tablero || {};
+    const lugar = t.ubicacion || t.zona || null;
+    const coord = lugar && Number.isFinite(lugar.lat) && Number.isFinite(lugar.lng) ? { lat: lugar.lat, lng: lugar.lng } : {};
     piezas.push({
       id: d.id || ent.name, maquina: d.maquina, titulo: d.titulo, alias: d.alias || '',
       ciudad: d.ciudad || '', fecha: d.fecha || '', imagen: `${base}/${archivo}`,
       mini: (await existe('mini.jpg')) ? `${base}/mini.jpg` : `${base}/${archivo}`,
       grande: (await existe('grande.jpg')) ? `${base}/grande.jpg` : `${base}/${archivo}`,
+      ...coord,
     });
   } catch (e) {
     console.warn(`omitido ${base}: ${e.message}`);

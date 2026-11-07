@@ -54,6 +54,12 @@
       <h1 id="nombre-maquina"></h1>
     </div>
     <p class="sub" id="conteo-maquina"></p>
+    <div class="vista-toggle" id="vista-toggle" hidden>
+      <button class="herr on" type="button" data-vista="rejilla">cuadrícula</button>
+      <button class="herr" type="button" data-vista="mapa">mapa</button>
+    </div>
+    <div id="mapa-galeria" hidden></div>
+    <p class="ayuda" id="nota-mapa" hidden></p>
     <div class="rejilla" id="rejilla"></div>
     <p class="mensaje" id="estado-galeria"></p>
     <p id="participar" hidden style="margin-top:36px"><a class="boton" href="#">participar en esta máquina_ →</a></p>
@@ -76,7 +82,7 @@
     { id: 'constelaciones_urbanas', nombre: 'constelacio-<br>nes_urbanas', instructivo: 'constelaciones_urbanas.html' },
     { id: 'un_pueblo_feliz', nombre: 'un_pue-<br>blo_feliz' },
     { id: 'poe_arqui_lecturas', nombre: 'poe_arqui_<br>lecturas', instructivo: 'poe_arqui_lecturas.html' },
-    { id: 'anar_quitecturas', nombre: 'anar_quitec-<br>turas' },
+    { id: 'anar_quitecturas', nombre: 'anar_quitec-<br>turas', instructivo: 'anar_quitecturas.html', mapa: true },
     { id: 'no_poesia', nombre: 'no_poe-<br>sía' },
     { id: 'ficciones_de_mi_barrio', nombre: 'ficciones_-<br>de_mi_barrio', instructivo: 'ficciones_de_mi_barrio.html' },
   ];
@@ -124,10 +130,47 @@
 
   // ── visor ──
   const visor = $('visor'), vimg = $('visor-img'), original = $('visor-original');
+  const abrir = (p) => { vimg.src = p.grande || p.imagen; vimg.alt = p.titulo || ''; original.href = p.imagen; visor.classList.add('abierto'); };
   $('rejilla').addEventListener('click', (e) => {
     const b = e.target.closest('.pieza'); if (!b) return;
     vimg.src = b.dataset.src; vimg.alt = b.dataset.alt; original.href = b.dataset.original; visor.classList.add('abierto');
   });
+
+  // ── mapa de la carpeta (máquinas con ubicación) ──
+  if (elegida && elegida.mapa) {
+    const conLugar = piezas.filter((p) => p.maquina === elegida.id && Number.isFinite(p.lat) && Number.isFinite(p.lng));
+    if (conLugar.length) {
+      $('vista-toggle').hidden = false;
+      let mapa = null;
+      const cargar = (tag, attrs) => new Promise((ok, mal) => { const el = document.createElement(tag); Object.assign(el, attrs); el.onload = ok; el.onerror = mal; document.head.appendChild(el); });
+      const verMapa = async () => {
+        if (!window.L) {
+          await cargar('link', { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css' });
+          await cargar('script', { src: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js' });
+        }
+        if (mapa) { mapa.invalidateSize(); return; }
+        document.body.classList.add('mapa-gris');
+        mapa = L.map('mapa-galeria');
+        mapa.attributionControl.setPrefix(false);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(mapa);
+        const marcas = conLugar.map((p) => L.marker([p.lat, p.lng], {
+          title: p.titulo,
+          icon: L.divIcon({ className: 'marca-foto', html: `<img src="${esc(p.mini || p.imagen)}" alt="${esc(p.titulo)}">`, iconSize: [46, 46] }),
+        }).on('click', () => abrir(p)).addTo(mapa));
+        mapa.fitBounds(L.featureGroup(marcas).getBounds().pad(0.3), { maxZoom: 16 });
+      };
+      const sinLugar = piezas.filter((p) => p.maquina === elegida.id).length - conLugar.length;
+      $('vista-toggle').addEventListener('click', async (e) => {
+        const b = e.target.closest('[data-vista]'); if (!b) return;
+        const esMapa = b.dataset.vista === 'mapa';
+        document.querySelectorAll('[data-vista]').forEach((x) => x.classList.toggle('on', x === b));
+        $('rejilla').hidden = esMapa; $('mapa-galeria').hidden = !esMapa;
+        $('nota-mapa').hidden = !esMapa || !sinLugar;
+        $('nota-mapa').textContent = sinLugar ? `${plural(sinLugar)} sin ubicación: solo en la cuadrícula.` : '';
+        if (esMapa) { try { await verMapa(); } catch { $('estado-galeria').textContent = 'el mapa no cargó; revisa tu conexión.'; } }
+      });
+    }
+  }
   const cerrar = () => visor.classList.remove('abierto');
   $('cerrar').addEventListener('click', cerrar);
   visor.addEventListener('click', (e) => { if (e.target === visor) cerrar(); });
