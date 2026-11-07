@@ -237,3 +237,7 @@ h2 { font-weight: 400; font-size: 22px; margin: 48px 0 16px; }
   .paso-t { margin-top: 28px; }
   .estilo { grid-template-columns: 60px 1fr; }
 }
+
+/* OpenStreetMap en escala de grises, para que combine con el muro */
+.mapa-gris .leaflet-tile-pane { filter: grayscale(1) contrast(.85) brightness(1.06); }
+.mapa-gris .tablero .fondo-mapa { filter: grayscale(1); }

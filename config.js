@@ -3,4 +3,5 @@
 window.MAQUINAS_CONFIG = {
   WORKER_URL: 'https://maquinas-envios.diegogut93.workers.dev',// ej. 'https://maquinas-envios.TU-SUBDOMINIO.workers.dev'
   TURNSTILE_SITEKEY: '0x4AAAAAAF2x2hFO1VH0c_vP', // ej. '0x4AAAAAAA...'
+  MAPA_KEY: '',            // clave gratuita de CARTO Basemaps (carto.com/basemaps/apikey). vacía = OpenStreetMap en grises
 };

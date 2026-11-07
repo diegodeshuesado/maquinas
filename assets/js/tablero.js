@@ -15,8 +15,15 @@
   const CFG = window.MAQUINAS_CONFIG || {};
   const CLAVE = 'maquinas_constelaciones_urbanas_v2';
   const TOTAL = 5;
-  const TESELAS = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png';
-  const ATRIB = '© OpenStreetMap © CARTO';
+  // mapa: CARTO (gris claro) si hay clave en config.js; si no, OpenStreetMap pasado a escala de grises
+  const CLAVE_MAPA = String(CFG.MAPA_KEY || '').trim();
+  const TESELAS = CFG.MAPA_TESELAS || (CLAVE_MAPA
+    ? `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png?key=${CLAVE_MAPA}`
+    : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+  const SUBDOMINIOS = TESELAS.includes('{s}') ? 'abcd' : '';
+  const MAX_ZOOM = CLAVE_MAPA ? 20 : 19;
+  const GRISES = !CLAVE_MAPA && !CFG.MAPA_TESELAS;
+  const ATRIB = CLAVE_MAPA ? '© OpenStreetMap © CARTO' : '© OpenStreetMap';
   const INICIO = { lat: 20.5931, lng: -100.3923, zoom: 15 }; // centro de Querétaro mientras no hay ubicación
   const OPACIDAD_MAPA = 0.35;
   const TRAZOS = { continua: '', discontinua: '8 6', punteada: '0.1 7' };
@@ -87,7 +94,7 @@
     const z = estado.zona || INICIO;
     mapa = L.map('mapa', { zoomControl: true, attributionControl: true }).setView([z.lat, z.lng], z.zoom);
     mapa.attributionControl.setPrefix(false);
-    L.tileLayer(TESELAS, { subdomains: 'abcd', maxZoom: 20, crossOrigin: true, attribution: ATRIB, tileSize: 256 }).addTo(mapa);
+    L.tileLayer(TESELAS, { subdomains: SUBDOMINIOS, maxZoom: MAX_ZOOM, crossOrigin: true, attribution: ATRIB, tileSize: 256 }).addTo(mapa);
     mapa.on('movestart zoomstart', () => { if (!moviendoPorCodigo && estado.zona) marcarZona(false); });
     marcarZona(!!estado.zona);
   }
@@ -105,13 +112,26 @@
     estado.zona = { lat: c.lat, lng: c.lng, zoom: mapa.getZoom(), w: el.clientWidth, h: el.clientHeight };
     marcarZona(true); aviso.textContent = ''; guardar(); fondoListo = null;
   });
+  // ubicación: primero precisa; si tarda, una aproximada; si no hay permiso, se explica cómo darlo
+  function ubicar(ok, mal) {
+    const pedir = (alta, espera) => navigator.geolocation.getCurrentPosition(ok, (err) => {
+      if (err.code === 1) return mal('permiso');
+      if (alta) return pedir(false, 20000);
+      mal('tiempo');
+    }, { enableHighAccuracy: alta, timeout: espera, maximumAge: 120000 });
+    pedir(true, 8000);
+  }
   $('#mi-ubicacion').addEventListener('click', () => {
-    if (!navigator.geolocation) return ($('#estado-zona').textContent = 'tu navegador no permite ubicarte; mueve el mapa a mano.');
-    $('#estado-zona').textContent = 'buscando tu ubicación_';
-    navigator.geolocation.getCurrentPosition(
-      (p) => { mapa.setView([p.coords.latitude, p.coords.longitude], 17); $('#estado-zona').textContent = 'ya estás en el mapa. ajusta el encuadre y toca «fijar zona».'; },
-      () => { $('#estado-zona').textContent = 'no se pudo obtener tu ubicación; mueve el mapa a mano.'; },
-      { enableHighAccuracy: true, timeout: 10000 },
+    const estadoZona = $('#estado-zona');
+    if (!navigator.geolocation) return (estadoZona.textContent = 'tu navegador no permite ubicarte; mueve el mapa a mano.');
+    estadoZona.textContent = 'buscando tu ubicación_';
+    ubicar(
+      (p) => { mapa.setView([p.coords.latitude, p.coords.longitude], 17); estadoZona.textContent = 'ya estás en el mapa. ajusta el encuadre y toca «fijar zona».'; },
+      (motivo) => {
+        estadoZona.textContent = motivo === 'permiso'
+          ? 'tu navegador no tiene permiso de ubicación. en iPhone: Ajustes → Privacidad y seguridad → Localización → Sitios web de Safari → «Al usar la app». también puedes mover el mapa a mano.'
+          : 'no se encontró tu ubicación a tiempo; intenta de nuevo o mueve el mapa a mano.';
+      },
     );
   });
 
@@ -128,7 +148,7 @@
     const g = c.getContext('2d');
     g.fillStyle = '#ecebe8'; g.fillRect(0, 0, c.width, c.height);
     const z = zona.zoom + Math.log2(W / zona.w);
-    const tz = Math.max(1, Math.min(20, Math.round(z)));
+    const tz = Math.max(1, Math.min(MAX_ZOOM, Math.round(z)));
     const s = 2 ** (z - tz), n = 2 ** tz;
     const cp = proyectar(zona.lat, zona.lng, tz);
     const izq = cp.x - W / 2 / s, arr = cp.y - H / 2 / s;
@@ -141,6 +161,17 @@
       }
     }
     await Promise.all(tareas);
+    if (GRISES) {
+      try {
+        const d = g.getImageData(0, 0, c.width, c.height), px = d.data;
+        for (let i = 0; i < px.length; i += 4) {
+          const l = 0.3 * px[i] + 0.59 * px[i + 1] + 0.11 * px[i + 2];
+          const v = 236 + (l - 236) * 0.75; // gris claro, poco contraste
+          px[i] = px[i + 1] = px[i + 2] = v;
+        }
+        g.putImageData(d, 0, 0);
+      } catch {}
+    }
     return c;
   }
   let fondoListo = null;
@@ -606,6 +637,8 @@
   });
 
   // ── inicio ────────────────────────────────────────────────────────────
+  document.body.classList.toggle('mapa-gris', GRISES);
+  $$('.atrib').forEach((el) => { el.textContent = ATRIB; });
   recuperar();
   irA(estado.paso || 1);
 })();
