@@ -1,0 +1,20 @@
+name: explorar fuentes
+on:
+  push:
+    branches: [explorar]
+jobs:
+  ver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: sesnsp
+        run: |
+          curl -sSL -A "Mozilla/5.0" https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva -o p.html; ls -la p.html
+          grep -oE 'href="[^"]+"[^>]*>[^<]{0,120}' p.html | grep -iE 'drive|csv|zip|xls|v[ií]ctima|metodolog|datos' | head -60
+          grep -oiE '[^<>]{0,80}(nueva metodolog|v[ií]ctimas)[^<>]{0,80}' p.html | head -30
+      - name: rnpdno
+        run: |
+          curl -sSL -A "Mozilla/5.0" -o r.html -w "%{http_code}\n" https://versionpublica.cnb.gob.mx/ ; head -c 1500 r.html; echo
+          grep -oE '(src|href)="[^"]+"' r.html | head -30
+      - name: gabinete
+        run: |
+          curl -sSL -A "Mozilla/5.0" -o g.html -w "%{http_code}\n" https://gabinetedeseguridad.gob.mx/homicidios/ ; grep -oE '(src|href)="[^"]+"' g.html | head -40
