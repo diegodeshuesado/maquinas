@@ -22,10 +22,10 @@
   const RECORTE_FAMILIAS = ['"Permanent Marker", cursive', '"Special Elite", monospace', '"Stardos Stencil", sans-serif', '"Sedgwick Ave Display", cursive', '"Share Tech Mono", monospace'];
   const RECORTE_FONDOS = [['#ffffff', '#141414'], ['#141414', '#f3f2ef'], ['#e3a83a', '#141414'], ['#b3261e', '#ffffff'], ['#f3f2ef', '#141414']];
   const REFERENTES = [
-    ['monumento', 'monumento estatua México bronce'], ['palacio', 'Palacio Nacional México fachada'],
-    ['billete', 'billete Banco de México'], ['escudo', 'escudo nacional de México'],
-    ['congreso', 'Cámara de Diputados México edificio'], ['trono', 'trono'],
-    ['catedral', 'catedral metropolitana México'], ['moneda', 'moneda peso mexicano'],
+    ['monumento', 'monumento a la Revolución'], ['ángel', 'Ángel de la Independencia'],
+    ['palacio', 'Palacio Nacional México'], ['congreso', 'Palacio Legislativo de San Lázaro'],
+    ['corte', 'Suprema Corte de Justicia de la Nación edificio'], ['catedral', 'Catedral Metropolitana de la Ciudad de México'],
+    ['escudo', 'Escudo Nacional Mexicano'], ['estatua', 'estatua ecuestre bronce'], ['billete', 'billete Banco de México'],
   ];
   // mapa (paso 4), igual que en las otras máquinas
   const CLAVE_MAPA = String(CFG.MAPA_KEY || '').trim();
