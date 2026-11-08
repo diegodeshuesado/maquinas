@@ -1,0 +1,20 @@
+{
+  "id": "2026-11-08_anar_quitecturas_b7b52a4f",
+  "maquina": "anar_quitecturas",
+  "titulo": "monumento a la involución",
+  "narrativa": "—",
+  "ubicacion": "",
+  "alias": "1sht",
+  "ciudad": "",
+  "fecha": "2026-11-08",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "ubicacion": null,
+    "base": {
+      "fuente": "Wikimedia Commons",
+      "autor": "Carlos Valenzuela",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Monumento_a_la_revoluci%C3%B3n2017.jpg"
+    }
+  }
+}
