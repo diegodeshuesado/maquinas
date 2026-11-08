@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="version" content="__VERSION__">
 <script>
+/* pasar a https; quien ya tiene una pieza guardada en http se queda ahí para no perderla (el guardado es por dirección) */
+if (location.protocol === 'http:' && /diegodeshuesado\.com$/.test(location.hostname)) {
+  var guardada = false;
+  try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.indexOf('maquinas_') === 0 && k !== 'maquinas_worker_png') guardada = true; } } catch (e) {}
+  if (!guardada) location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+}
+</script>
+<script>
 /* si hay una versión más nueva publicada, recarga una vez para no quedarse con la copia vieja del navegador */
 (function () {
   function revisar() {
