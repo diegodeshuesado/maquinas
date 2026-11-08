@@ -1,0 +1,20 @@
+{
+  "id": "2026-11-08_un_pueblo_feliz_e943d68b",
+  "maquina": "un_pueblo_feliz",
+  "titulo": "520 víctimas de feminicidio de enero a septiembre de 2026",
+  "narrativa": "520 víctimas de feminicidio de enero a septiembre de 2026. fuente: SESNSP (oficial, septiembre de 2026).",
+  "ubicacion": "",
+  "alias": "",
+  "ciudad": "",
+  "fecha": "2026-11-08",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "cifra": "fem-acum",
+    "numero": "520",
+    "texto": "víctimas de feminicidio de enero a septiembre de 2026",
+    "fuente": "SESNSP",
+    "tipo": "oficial",
+    "periodo": "septiembre de 2026",
+    "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva"
+  }
+}
