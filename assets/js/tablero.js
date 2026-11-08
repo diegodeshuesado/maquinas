@@ -1029,31 +1029,26 @@
   }
 
   // pieza de poe_arqui_lecturas: mapa con pines numerados y la secuencia foto + fragmento
-  async function componerSecuencia(S = 2, conMapa = true) {
+  // secuencia foto-poética como fanzine: cada foto a lo ancho y su fragmento al pie (el mapa vive en la galería)
+  async function componerSecuencia(S = 2) {
     try { await document.fonts.load(`20px "Share Tech Mono"`); } catch {}
     await esperarImagenes();
     const W = 1400 * S, P = 72 * S, interior = W - P * 2;
-    const { W: bw, H: bh } = dims();
-    // el mapa se recorta a lo ancho si el tablero era vertical (celular), para que no domine la pieza
-    const BHtotal = Math.round(interior * (bh / bw));
-    const BH = Math.min(BHtotal, Math.round(interior * 0.62));
-    const recorte = (BHtotal - BH) / 2;
     const v = Object.fromEntries(Object.entries(campos).map(([kk, el]) => [kk, el.value.trim()]));
     const fecha = new Date().toISOString().slice(0, 10);
     const fotos = ordenadas();
-    const colN = 46 * S, fotoW = Math.round(interior * 0.44), sep = 28 * S, textoW = interior - colN - fotoW - sep;
-
+    const colN = 52 * S, fotoW = interior - colN, LH = 40 * S;
     const medir = document.createElement('canvas').getContext('2d');
     medir.font = `${40 * S}px ${FUENTE}`; const tit = envolver(medir, v.titulo || 'sin título', interior);
-    medir.font = `${26 * S}px ${FUENTE}`;
+    medir.font = `${28 * S}px ${FUENTE}`;
     const items = fotos.map((t) => {
-      const lineas = envolver(medir, (t.fragmento || '').trim() || '—', textoW);
-      const fh = fotoW * t.ar;
-      return { t, lineas, h: Math.max(fh, lineas.length * 38 * S) };
+      const fh = Math.round(fotoW * Math.min(t.ar || 1, 1.25));      // las verticales se recortan a 4:5
+      const lineas = envolver(medir, (t.fragmento || '').trim() || '—', fotoW);
+      return { t, fh, lineas, h: fh + 30 * S + lineas.length * LH };
     });
-    let alto = P + 44 * S + 88 * S + tit.length * 50 * S + 32 * S + BH + 56 * S;
-    alto += items.reduce((a, it) => a + it.h + 40 * S, 0);
-    alto += 40 * S + 60 * S + 26 * S * 3 + P;
+    let alto = P + 44 * S + 88 * S + tit.length * 50 * S + 40 * S;
+    alto += items.reduce((acc, it) => acc + it.h + 72 * S, 0);
+    alto += 40 * S + 26 * S * 2 + P;
 
     const c = document.createElement('canvas'); c.width = W; c.height = Math.ceil(alto);
     const g = c.getContext('2d');
@@ -1063,52 +1058,30 @@
     g.font = `${44 * S}px ${FUENTE}`; g.fillStyle = '#141414'; g.fillText(M.titulo, P, y); y += 88 * S;
     g.font = `${40 * S}px ${FUENTE}`;
     for (const l of tit) { g.fillText(l, P, y); y += 50 * S; }
-    y += 32 * S;
+    y += 40 * S;
 
-    // mapa con pines numerados
-    const ox = P, oy = y;
-    g.fillStyle = '#ffffff'; g.fillRect(ox, oy, interior, BH);
-    if (conMapa && estado.zona) {
-      const mc = await dibujarMapa(estado.zona, interior, BHtotal);
-      g.save(); g.globalAlpha = OPACIDAD_MAPA; g.drawImage(mc, 0, recorte, interior, BH, ox, oy, interior, BH); g.restore();
-    }
-    g.save(); g.beginPath(); g.rect(ox, oy, interior, BH); g.clip();
-    const q = 3.6 * S;
-    fotos.forEach((t, i) => {
-      if (!t.pin) return;
-      const py = Math.min(Math.max(t.pin.y * BHtotal - recorte, 18 * q), BH - 2 * S);
-      dibujarPin(g, ox + t.pin.x * interior, oy + py, q, i + 1);
-    });
-    g.restore();
-    g.lineWidth = 1.5 * S; g.strokeStyle = '#141414'; g.strokeRect(ox + 0.5, oy + 0.5, interior - 1, BH - 1);
-    if (conMapa && estado.zona) {
-      g.font = `${11 * S}px sans-serif`; g.fillStyle = '#8a8984'; g.textAlign = 'right';
-      g.fillText(ATRIB, ox + interior - 8 * S, oy + BH - 18 * S); g.textAlign = 'left';
-    }
-    y = oy + BH + 56 * S;
-
-    // secuencia
     items.forEach((it, i) => {
-      const im = imgs.get(it.t.id), fh = fotoW * it.t.ar;
+      const im = imgs.get(it.t.id), fx = P + colN;
       g.beginPath(); g.arc(P + 15 * S, y + 15 * S, 15 * S, 0, Math.PI * 2); g.fillStyle = '#141414'; g.fill();
       g.fillStyle = '#fff'; g.font = `${16 * S}px ${FUENTE}`; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.fillText(String(i + 1), P + 15 * S, y + 16 * S); g.textAlign = 'left'; g.textBaseline = 'top';
-      const fx = P + colN;
-      if (im && im.naturalWidth) g.drawImage(im, fx, y, fotoW, fh);
-      g.lineWidth = 1.5 * S; g.strokeStyle = '#141414'; g.strokeRect(fx, y, fotoW, fh);
-      g.fillStyle = '#141414'; g.font = `${26 * S}px ${FUENTE}`;
-      let ty = y;
-      for (const l of it.lineas) { g.fillText(l, fx + fotoW + sep, ty); ty += 38 * S; }
-      y += it.h + 40 * S;
+      if (im && im.naturalWidth) {
+        const iw = im.naturalWidth, ih = im.naturalHeight, k = Math.max(fotoW / iw, it.fh / ih);
+        const sw = fotoW / k, sh = it.fh / k;
+        g.drawImage(im, (iw - sw) / 2, (ih - sh) / 2, sw, sh, fx, y, fotoW, it.fh);
+      }
+      g.lineWidth = 1.5 * S; g.strokeStyle = '#141414'; g.strokeRect(fx, y, fotoW, it.fh);
+      let ty = y + it.fh + 30 * S;
+      g.fillStyle = '#141414'; g.font = `${28 * S}px ${FUENTE}`;
+      for (const l of it.lineas) { g.fillText(l, fx, ty); ty += LH; }
+      y += it.h + 72 * S;
     });
 
-    y += 0;
     g.fillStyle = '#141414'; g.fillRect(P, y, interior, 1.5 * S); y += 40 * S;
     g.font = `${20 * S}px ${FUENTE}`;
     g.fillText([v.alias || 'anónimo', v.ciudad, fecha].filter(Boolean).join(' · '), P, y); y += 26 * S;
     g.fillStyle = '#6f6f6c';
-    g.fillText(`${LICENCIA} · máquinas_ · ${M.credito}`, P, y); y += 26 * S;
-    if (estado.zona) g.fillText(`mapa ${ATRIB}`, P, y);
+    g.fillText(`${LICENCIA} · máquinas_ · ${M.credito}`, P, y);
     return c;
   }
 
