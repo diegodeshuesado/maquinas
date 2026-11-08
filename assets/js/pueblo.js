@@ -282,6 +282,7 @@
       if (!r.ok) throw new Error(res.error || `error ${r.status}`);
       avisoFinal(''); $('#f-consent').checked = false;
       reiniciar();
+      try { if (window.gtag) gtag('event', 'pieza_enviada', { maquina: M.id }); } catch {}
       $('#formulario').hidden = true; $('.vista').hidden = true; $('#exito').hidden = false;
       $(`.paso[data-paso="${TOTAL}"]`).classList.add('enviado'); $('#reiniciar').hidden = true; $('#anterior').style.visibility = 'hidden';
       window.scrollTo({ top: 0, behavior: 'smooth' });

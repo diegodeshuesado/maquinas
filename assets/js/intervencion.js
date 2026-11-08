@@ -668,6 +668,7 @@
       if (!r.ok) throw new Error(res.error || `error ${r.status}`);
       avisoFinal(''); $('#f-consent').checked = false;
       reiniciar(true);
+      try { if (window.gtag) gtag('event', 'pieza_enviada', { maquina: M.id }); } catch {}
       $('#formulario').hidden = true; $('.vista').hidden = true; $('#exito').hidden = false;
       $('.paso[data-paso="5"]').classList.add('enviado'); $('#reiniciar').hidden = true; $('#anterior').style.visibility = 'hidden';
       window.scrollTo({ top: 0, behavior: 'smooth' });

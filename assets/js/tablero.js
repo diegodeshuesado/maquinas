@@ -1194,6 +1194,7 @@
       reiniciar(true);
       $('#formulario').hidden = true;
       $('.vista').hidden = true;
+      try { if (window.gtag) gtag('event', 'pieza_enviada', { maquina: M.id }); } catch {}
       $('#exito').hidden = false;
       $('.paso[data-paso="5"]').classList.add('enviado');
       $('#reiniciar').hidden = true;
