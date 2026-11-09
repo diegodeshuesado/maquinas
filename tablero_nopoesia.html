@@ -67,7 +67,7 @@ if (location.protocol === 'http:' && /diegodeshuesado\.com$/.test(location.hostn
   <!-- 1 · poema -->
   <section class="paso" data-paso="1">
     <h1 class="paso-t">elegir el poema_</h1>
-    <p class="paso-d">busca un poema por poeta o palabra, deja que el azar elija, o pega uno propio. puedes quitar o cambiar versos.</p>
+    <p class="paso-d">busca un poema por poeta o palabra, deja que el azar elija, o pega uno propio. toca los versos que quieras escribir (¶ elige la estrofa completa).</p>
     <div class="buscador">
       <input id="ws-q" type="search" placeholder="poeta o palabra" aria-label="buscar poesía" enterkeyhint="search">
       <button class="herr on" type="button" id="ws-buscar">buscar_</button>
@@ -78,12 +78,14 @@ if (location.protocol === 'http:' && /diegodeshuesado\.com$/.test(location.hostn
     <div class="poema" id="ws-poema" hidden>
       <p class="poema-t" id="ws-poema-t"></p>
       <div class="versos" id="ws-versos"></div>
+      <p class="ayuda" id="ws-sel-nota"></p>
       <button class="boton" type="button" id="ws-usar">usar este poema_ ↓</button>
     </div>
     <div class="campo" style="margin-top:28px">
       <label for="poema">tu poema:/&lt; <span class="nota-in" id="n-versos"></span></label>
       <textarea id="poema" class="poema-txt" maxlength="4000" placeholder="un verso por renglón; deja un renglón vacío entre estrofas"></textarea>
     </div>
+    <p class="ayuda" id="largo" style="color:#b3261e"></p>
     <p style="margin-top:14px"><button class="enlace" type="button" id="fuera" style="padding:0">lo tengo en un libro o en papel_ →</button></p>
     <p class="ayuda" id="fuera-ok" hidden>de acuerdo_ tendrás tu poema a la mano mientras escribes.</p>
   </section>

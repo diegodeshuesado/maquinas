@@ -12,7 +12,7 @@
   const TINTA = '#141414';
   const RA = 1 / 3;            // alto del renglón en unidades de ancho
   const BASE = 0.62;           // línea guía del renglón (fracción del alto)
-  const MAX_VERSOS = 30;
+  const MAX_VERSOS = 12;   // verso por verso; la hoja libre y el papel no tienen límite
   const PLUMAS = { pluma: 0.0035, plumon: 0.008, pincel: 0.009 };
 
   const estadoInicial = () => ({
@@ -97,7 +97,9 @@
   }
   async function wsBuscar(q) {
     const d = await wsPedir({ action: 'query', list: 'search', srsearch: `${q} insource:poem`, srnamespace: '0', srlimit: '30', srprop: 'size' });
-    return ((d.query && d.query.search) || []).filter((r) => r.size > 120 && r.size < 8000).map((r) => r.title);
+    const todos = ((d.query && d.query.search) || []).filter((r) => r.size > 120 && r.size < 8000);
+    const cortos = todos.filter((r) => r.size < 1800);           // ~20 versos o menos
+    return (cortos.length >= 3 ? cortos : todos).map((r) => r.title);
   }
   const tituloLimpio = (t) => t.split('/').pop().replace(/\s*\([^)]*\)\s*$/, '').trim() || t;
   const decodificar = (t) => { const a = document.createElement('textarea'); a.innerHTML = t; return a.value; };
@@ -128,8 +130,27 @@
     $('#ws-poema').hidden = false;
     $('#ws-poema-t').textContent = p.titulo;
     const v = $('#ws-versos'); v.innerHTML = '';
-    p.versos.forEach((l) => { const d = document.createElement('p'); d.className = l ? 'verso' : 'verso vacio'; d.textContent = l || ' '; v.appendChild(d); });
+    let estrofa = null;
+    p.versos.forEach((l, i) => {
+      if (!l) { estrofa = null; const d = document.createElement('p'); d.className = 'verso vacio'; d.textContent = ' '; v.appendChild(d); return; }
+      if (!estrofa) {
+        estrofa = document.createElement('div'); estrofa.className = 'estrofa';
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'parrafo'; b.textContent = '¶'; b.setAttribute('aria-label', 'elegir la estrofa completa');
+        const e = estrofa;
+        b.addEventListener('click', () => { const vs = [...e.querySelectorAll('.verso')], todos = vs.every((x) => x.classList.contains('sel')); vs.forEach((x) => x.classList.toggle('sel', !todos)); contarSel(); });
+        estrofa.appendChild(b); v.appendChild(estrofa);
+      }
+      const d = document.createElement('p'); d.className = 'verso'; d.textContent = l; d.dataset.i = i;
+      d.addEventListener('click', () => { d.classList.toggle('sel'); contarSel(); });
+      estrofa.appendChild(d);
+    });
+    contarSel();
     $('#ws-poema').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function contarSel() {
+    const n = $$('#ws-versos .verso.sel').length, total = abierto ? abierto.versos.filter(Boolean).length : 0;
+    $('#ws-usar').textContent = n ? `usar ${n} ${n === 1 ? 'verso' : 'versos'}_ ↓` : `usar todo el poema (${total} versos)_ ↓`;
+    $('#ws-sel-nota').textContent = total > MAX_VERSOS && !n ? `es largo: toca los versos que quieras escribir (hasta ${MAX_VERSOS} para verso por verso).` : '';
   }
   async function abrirTitulo(t) {
     $('#ws-estado').textContent = 'abriendo poema_';
@@ -158,16 +179,21 @@
   $('#ws-usar').addEventListener('click', () => {
     if (!abierto) return;
     if (estado.poema.trim() && !confirm('¿reemplazar el poema que ya tienes?')) return;
-    usarPoema(abierto.versos.join('\n'));
+    const sel = $$('#ws-versos .verso.sel').map((d) => Number(d.dataset.i));
+    let versosUsar = abierto.versos;
+    if (sel.length) { versosUsar = []; sel.forEach((i, k) => { if (k && i !== sel[k - 1] + 1) versosUsar.push(''); versosUsar.push(abierto.versos[i]); }); }
+    usarPoema(versosUsar.join('\n'));
     $('#poema').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
   function usarPoema(txt) {
     estado.poema = txt; estado.fuera = false; estado.renglones = {}; estado.actual = 0;
+    estado.modo = txt.split('\n').filter((l) => l.trim()).length <= MAX_VERSOS ? 'verso' : 'hoja';
     $('#poema').value = txt; guardar(); pintarPoema();
   }
   function pintarPoema() {
     const n = versos().length;
-    $('#n-versos').textContent = n ? `${n} ${n === 1 ? 'verso' : 'versos'}` : '';
+    $('#n-versos').textContent = n ? `${n} ${n === 1 ? 'verso' : 'versos'} · unos ${Math.max(1, Math.round(n * 0.35))} min` : '';
+    $('#largo').textContent = n > MAX_VERSOS ? `para escribir verso por verso usa hasta ${MAX_VERSOS}: borra algunos aquí o elige versos arriba. con más, en el paso 2 usa «hoja libre».` : '';
     $('#fuera-ok').hidden = !estado.fuera;
   }
   let tPoema = null;
@@ -283,7 +309,7 @@
   function pintarModo() {
     const n = versos().length, modo = estado.modo;
     $$('[data-modo-esc]').forEach((b) => b.classList.toggle('on', b.dataset.modoEsc === modo));
-    $('[data-modo-esc="verso"]').disabled = estado.fuera || !n;
+    $('[data-modo-esc="verso"]').disabled = estado.fuera || !n || n > MAX_VERSOS;
     $$('[data-pluma]').forEach((b) => b.classList.toggle('on', b.dataset.pluma === estado.herramienta));
     $('#panel-verso').hidden = modo !== 'verso';
     $('#panel-hoja').hidden = modo !== 'hoja';
@@ -445,7 +471,7 @@
     aviso.textContent = '';
     if (paso === 1) pintarPoema();
     if (paso === 2) {
-      if (estado.modo === 'verso' && (estado.fuera || !versos().length)) estado.modo = 'hoja';
+      if (estado.modo === 'verso' && (estado.fuera || !versos().length || versos().length > MAX_VERSOS)) estado.modo = 'hoja';
       pintarModo(); requestAnimationFrame(pintarLienzo); refrescarMini();
     }
     if (paso === 3) { const c = renderPagina(900); if (c) $('#vista-nombrar').src = c.toDataURL('image/jpeg', 0.85); }
