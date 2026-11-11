@@ -1,0 +1,20 @@
+{
+  "id": "2026-11-11_un_pueblo_feliz_90ce9b6a",
+  "maquina": "un_pueblo_feliz",
+  "titulo": "23 millones de personas adultas fueron víctimas de algún delito en 2025",
+  "narrativa": "23 millones de personas adultas fueron víctimas de algún delito en 2025. fuente: INEGI, ENVIPE 2026 (oficial, 2025).",
+  "ubicacion": "",
+  "alias": "",
+  "ciudad": "",
+  "fecha": "2026-11-11",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "cifra": "victimas-2025",
+    "numero": "23 millones",
+    "texto": "de personas adultas fueron víctimas de algún delito en 2025",
+    "fuente": "INEGI, ENVIPE 2026",
+    "tipo": "oficial",
+    "periodo": "2025",
+    "url": "https://www.inegi.org.mx/contenidos/saladeprensa/boletines/2026/envipe/ENVIPE2026_CP.pdf"
+  }
+}
