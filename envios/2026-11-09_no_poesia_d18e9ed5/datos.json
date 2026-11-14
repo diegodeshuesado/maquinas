@@ -1,0 +1,15 @@
+{
+  "id": "2026-11-09_no_poesia_d18e9ed5",
+  "maquina": "no_poesia",
+  "titulo": "hoy",
+  "narrativa": "—",
+  "ubicacion": "",
+  "alias": "loka",
+  "ciudad": "Querétaro",
+  "fecha": "2026-11-09",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "modo": "verso",
+    "versos": 2
+  }
+}
