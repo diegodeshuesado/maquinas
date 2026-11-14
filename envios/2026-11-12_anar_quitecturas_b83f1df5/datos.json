@@ -1,0 +1,20 @@
+{
+  "id": "2026-11-12_anar_quitecturas_b83f1df5",
+  "maquina": "anar_quitecturas",
+  "titulo": "frustración",
+  "narrativa": "sentir que nadie escucha, que no se hace nada, que tampoco sabes cómo aportar",
+  "ubicacion": "20.575, -100.367",
+  "alias": "",
+  "ciudad": "Qro",
+  "fecha": "2026-11-12",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "ubicacion": {
+      "lat": 20.575,
+      "lng": -100.367
+    },
+    "base": {
+      "fuente": "propia"
+    }
+  }
+}
