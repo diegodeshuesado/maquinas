@@ -1,0 +1,67 @@
+{
+  "id": "2026-11-15_ficciones_de_mi_barrio_e2a4aa5d",
+  "maquina": "ficciones_de_mi_barrio",
+  "titulo": "HBD",
+  "narrativa": "The best day of a person's life 😁",
+  "ubicacion": "20.593, -100.392",
+  "alias": "",
+  "ciudad": "",
+  "fecha": "2026-11-15",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "aspecto": null,
+    "zona": {
+      "lat": 20.593,
+      "lng": -100.392,
+      "zoom": 15
+    },
+    "estilo": {
+      "trazo": "continua",
+      "color": "#141414",
+      "grosor": "medio"
+    },
+    "tarjetas": [
+      {
+        "id": "wb8si0d",
+        "x": 0.03,
+        "y": 0.03,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": null,
+        "pin": {
+          "x": 0.24,
+          "y": 0.4584
+        }
+      },
+      {
+        "id": "flbq1ah",
+        "x": 0.51,
+        "y": 0.05,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": null,
+        "pin": {
+          "x": 0.72,
+          "y": 0.4784
+        }
+      },
+      {
+        "id": "sttt1s9",
+        "x": 0.05,
+        "y": 0.4684,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": null,
+        "pin": {
+          "x": 0.26,
+          "y": 0.8967
+        }
+      }
+    ],
+    "puntos": [],
+    "lineas": []
+  }
+}
