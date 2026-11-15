@@ -1,0 +1,20 @@
+{
+  "id": "2026-11-15_un_pueblo_feliz_0912f438",
+  "maquina": "un_pueblo_feliz",
+  "titulo": "697 víctimas de trata de personas de enero a septiembre de 2026",
+  "narrativa": "697 víctimas de trata de personas de enero a septiembre de 2026. fuente: SESNSP (oficial, septiembre de 2026).",
+  "ubicacion": "",
+  "alias": "",
+  "ciudad": "",
+  "fecha": "2026-11-15",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "cifra": "trata-acum",
+    "numero": "697",
+    "texto": "víctimas de trata de personas de enero a septiembre de 2026",
+    "fuente": "SESNSP",
+    "tipo": "oficial",
+    "periodo": "septiembre de 2026",
+    "url": "https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva"
+  }
+}
