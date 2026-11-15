@@ -1,0 +1,20 @@
+{
+  "id": "2026-11-15_anar_quitecturas_a8aac03c",
+  "maquina": "anar_quitecturas",
+  "titulo": ":c",
+  "narrativa": "—",
+  "ubicacion": "20.593, -100.392",
+  "alias": "Saqueo",
+  "ciudad": "Querétaro",
+  "fecha": "2026-11-15",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "ubicacion": {
+      "lat": 20.593,
+      "lng": -100.392
+    },
+    "base": {
+      "fuente": "propia"
+    }
+  }
+}
