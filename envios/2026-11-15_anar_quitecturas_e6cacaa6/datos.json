@@ -1,0 +1,23 @@
+{
+  "id": "2026-11-15_anar_quitecturas_e6cacaa6",
+  "maquina": "anar_quitecturas",
+  "titulo": "Saqueo",
+  "narrativa": "No es sequía, es saqueo.",
+  "ubicacion": "20.596, -100.373",
+  "alias": "Saqueo",
+  "ciudad": "Querétaro",
+  "fecha": "2026-11-15",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "ubicacion": {
+      "lat": 20.596,
+      "lng": -100.373
+    },
+    "base": {
+      "fuente": "Wikimedia Commons",
+      "autor": "Melodrartma",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Acueducto_de_Quer%C3%A9taro_2021_02.jpg"
+    }
+  }
+}
