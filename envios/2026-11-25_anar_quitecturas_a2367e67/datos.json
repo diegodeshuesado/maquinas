@@ -1,0 +1,20 @@
+{
+  "id": "2026-11-25_anar_quitecturas_a2367e67",
+  "maquina": "anar_quitecturas",
+  "titulo": "Puercos a la horden",
+  "narrativa": "—",
+  "ubicacion": "20.593, -100.392",
+  "alias": "1sht",
+  "ciudad": "",
+  "fecha": "2026-11-25",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "ubicacion": {
+      "lat": 20.593,
+      "lng": -100.392
+    },
+    "base": {
+      "fuente": "propia"
+    }
+  }
+}
