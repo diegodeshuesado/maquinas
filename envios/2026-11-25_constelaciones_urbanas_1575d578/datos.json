@@ -1,0 +1,77 @@
+{
+  "id": "2026-11-25_constelaciones_urbanas_1575d578",
+  "maquina": "constelaciones_urbanas",
+  "titulo": "maniatica de orion",
+  "narrativa": "cada una de estas luces se entrelazan como Orion con Artemisa, y Eos cada una se entrelazan como parte de una sola constelación",
+  "ubicacion": "20.591, -100.396",
+  "alias": "maniatica de Orion",
+  "ciudad": "Queretaro",
+  "fecha": "2026-11-25",
+  "licencia": "CC BY-NC-SA 4.0",
+  "tablero": {
+    "aspecto": null,
+    "zona": {
+      "lat": 20.591,
+      "lng": -100.396,
+      "zoom": 18
+    },
+    "estilo": {
+      "trazo": "punteada",
+      "color": "#b3261e",
+      "grosor": "grueso"
+    },
+    "tarjetas": [
+      {
+        "id": "dwrx9s5",
+        "x": 0.6809,
+        "y": 0.055,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": {
+          "lat": 20.592,
+          "lng": -100.394
+        }
+      },
+      {
+        "id": "kjtypob",
+        "x": 0.2702,
+        "y": 0.6558,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "green_light",
+        "coords": {
+          "lat": 20.591,
+          "lng": -100.396
+        }
+      },
+      {
+        "id": "kdjdeyc",
+        "x": 0.0103,
+        "y": 0.2148,
+        "w": 0.3,
+        "ar": 1.3333,
+        "label": "",
+        "coords": {
+          "lat": 20.593,
+          "lng": -100.392
+        }
+      }
+    ],
+    "puntos": [],
+    "lineas": [
+      [
+        "kdjdeyc",
+        "dwrx9s5"
+      ],
+      [
+        "dwrx9s5",
+        "kjtypob"
+      ],
+      [
+        "kjtypob",
+        "kdjdeyc"
+      ]
+    ]
+  }
+}
